@@ -6,11 +6,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Alert, AlertDescription } from "../components/ui/alert";
-import { ResilienceTank } from "../components/ResilienceTank";
-import { DriftGauge } from "../components/DriftGauge";
+} from "../Components/ui/card";
+import { Button } from "../Components/ui/button";
+import { Alert, AlertDescription } from "../Components/ui/alert";
+import { ResilienceTank } from "../Components/ResilienceTank";
+import { DriftGauge } from "../Components/DriftGauge";
 import {
   getUserProfile,
   getCheckInsLast7Days,
@@ -18,9 +18,6 @@ import {
   getPoints,
   getHealthTasks,
   completeHealthTask,
-  //   type UserProfile,
-  //   type DailyCheckIn,
-  //   type HealthTask,
 } from "../lib/storage";
 import { detectDrift, generateContextualMessage } from "../lib/drift-detection";
 import {
@@ -36,7 +33,8 @@ import {
   Circle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "motion/react";
+// eslint-disable-next-line no-unused-vars
+import { motion } from "framer-motion";
 import {
   LineChart,
   Line,
@@ -59,31 +57,20 @@ import {
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const [profile, setProfile] = (useState < UserProfile) | (null > null);
-  //   const [checkIns, setCheckIns] = useState<DailyCheckIn[]>([]);
-  const [todayCheckIn, setTodayCheckIn] =
-    (useState < DailyCheckIn) | (null > null);
-  const [driftResult, setDriftResult] = useState < any > null;
-  const [points, setPoints] = useState(0);
-  //   const [healthTasks, setHealthTasks] = useState<HealthTask[]>([]);
-
-  useEffect(() => {
+  const [profile] = useState(() => getUserProfile());
+  const [checkIns] = useState(() => getCheckInsLast7Days());
+  const [todayCheckIn] = useState(() => getTodaysCheckIn());
+  const [driftResult] = useState(() => {
     const userProfile = getUserProfile();
     const last7Days = getCheckInsLast7Days();
-    const today = getTodaysCheckIn();
-    const userPoints = getPoints();
-    const tasks = getHealthTasks();
+    return last7Days.length > 0 ? detectDrift(last7Days, userProfile) : null;
+  });
+  const [points, setPoints] = useState(() => getPoints());
+  const [healthTasks, setHealthTasks] = useState(() => getHealthTasks());
 
-    setProfile(userProfile);
-    setCheckIns(last7Days);
-    setTodayCheckIn(today);
-    setPoints(userPoints);
-    setHealthTasks(tasks);
-
-    if (last7Days.length > 0) {
-      const result = detectDrift(last7Days, userProfile);
-      setDriftResult(result);
-    }
+  useEffect(() => {
+    // Stats are initialized from localStorage.
+    // In a real app, you might subscribe to changes here.
   }, []);
 
   const handleCheckIn = () => {
@@ -98,13 +85,13 @@ export function Dashboard() {
     navigate("/find-doctor");
   };
 
-  //   const handleCompleteTask = (taskId: string) => {
-  //     completeHealthTask(taskId);
-  //     const tasks = getHealthTasks();
-  //     setHealthTasks(tasks);
-  //     setPoints(getPoints());
-  //     toast.success("Task completed! Points earned! 🎉");
-  //   };
+  const handleCompleteTask = (taskId) => {
+    completeHealthTask(taskId);
+    const tasks = getHealthTasks();
+    setHealthTasks(tasks);
+    setPoints(getPoints());
+    toast.success("Task completed! Points earned! 🎉");
+  };
 
   const handleExport = () => {
     const report = generateHealthReport(profile, checkIns, driftResult);
@@ -510,78 +497,82 @@ export function Dashboard() {
 }
 
 // Generate downloadable health report
-// function generateHealthReport(
-//   profile: UserProfile | null,
-//   checkIns: DailyCheckIn[],
-//   driftResult: any
-// ): string {
-//   const today = new Date().toLocaleDateString();
+function generateHealthReport(profile, checkIns, driftResult) {
+  const today = new Date().toLocaleDateString();
 
-//   return `
-// ═══════════════════════════════════════════
-//     DRIFTCARE NG - HEALTH SUMMARY REPORT
-// ═══════════════════════════════════════════
+  return `
+═══════════════════════════════════════════
+    DRIFTCARE NG - HEALTH SUMMARY REPORT
+═══════════════════════════════════════════
 
-// Generated: ${today}
-// Patient Name: [Fill in your name]
-// Age: ${profile?.age || "N/A"}
-// Location: ${profile?.city}, ${profile?.state}
+Generated: ${today}
+Patient Name: [Fill in your name]
+Age: ${profile?.age || "N/A"}
+Location: ${profile?.city}, ${profile?.state}
 
-// ───────────────────────────────────────────
-// CURRENT HEALTH STATUS
-// ───────────────────────────────────────────
+───────────────────────────────────────────
+CURRENT HEALTH STATUS
+───────────────────────────────────────────
 
-// Resilience Score: ${driftResult.resilienceScore}/100
-// Drift Level: ${driftResult.driftLevel.toUpperCase()}
-// BMI: ${profile?.bmi || "N/A"}
+Resilience Score: ${driftResult.resilienceScore}/100
+Drift Level: ${driftResult.driftLevel.toUpperCase()}
+BMI: ${profile?.bmi || "N/A"}
 
-// ───────────────────────────────────────────
-// ACTIVE ALERTS
-// ───────────────────────────────────────────
+───────────────────────────────────────────
+ACTIVE ALERTS
+───────────────────────────────────────────
 
-// ${driftResult.alerts.length > 0 ? driftResult.alerts.map((a: any) => `
-// ⚠️ ${a.severity.toUpperCase()}: ${a.message}
-//    Recommendation: ${a.recommendation}
-// `).join("\n") : "No active alerts."}
+${
+  driftResult.alerts.length > 0
+    ? driftResult.alerts
+        .map(
+          (a) => `
+⚠️ ${a.severity.toUpperCase()}: ${a.message}
+   Recommendation: ${a.recommendation}
+`,
+        )
+        .join("\n")
+    : "No active alerts."
+}
 
-// ───────────────────────────────────────────
-// LAST 7 DAYS SUMMARY
-// ───────────────────────────────────────────
+───────────────────────────────────────────
+LAST 7 DAYS SUMMARY
+───────────────────────────────────────────
 
-// Total Check-ins: ${checkIns.length}
-// Average Sleep: ${(checkIns.reduce((sum, c) => sum + c.hoursSlept, 0) / checkIns.length).toFixed(1)} hours
-// Average Stress Level: ${(checkIns.reduce((sum, c) => sum + c.stressLevel, 0) / checkIns.length).toFixed(1)}/10
-// Average Mood: ${(checkIns.reduce((sum, c) => sum + c.mood, 0) / checkIns.length).toFixed(1)}/10
+Total Check-ins: ${checkIns.length}
+Average Sleep: ${(checkIns.reduce((sum, c) => sum + c.hoursSlept, 0) / checkIns.length).toFixed(1)} hours
+Average Stress Level: ${(checkIns.reduce((sum, c) => sum + c.stressLevel, 0) / checkIns.length).toFixed(1)}/10
+Average Mood: ${(checkIns.reduce((sum, c) => sum + c.mood, 0) / checkIns.length).toFixed(1)}/10
 
-// ───────────────────────────────────────────
-// MEDICAL HISTORY
-// ───────────────────────────────────────────
+───────────────────────────────────────────
+MEDICAL HISTORY
+───────────────────────────────────────────
 
-// Known Conditions: ${profile?.knownConditions.length ? profile.knownConditions.join(", ") : "None"}
-// Family History: ${profile?.familyHistory.length ? profile.familyHistory.join(", ") : "None"}
+Known Conditions: ${profile?.knownConditions.length ? profile.knownConditions.join(", ") : "None"}
+Family History: ${profile?.familyHistory.length ? profile.familyHistory.join(", ") : "None"}
 
-// ───────────────────────────────────────────
-// NOTES FOR HEALTHCARE PROVIDER
-// ───────────────────────────────────────────
+───────────────────────────────────────────
+NOTES FOR HEALTHCARE PROVIDER
+───────────────────────────────────────────
 
-// This report is generated by DriftCare NG, a preventive health
-// monitoring tool. It is NOT a diagnostic tool. Please use this
-// information as context for clinical assessment.
+This report is generated by DriftCare NG, a preventive health
+monitoring tool. It is NOT a diagnostic tool. Please use this
+information as context for clinical assessment.
 
-// The patient has been tracking daily health metrics including:
-// - Sleep patterns
-// - Stress levels
-// - Physical activity
-// - Hydration
-// - Symptoms
+The patient has been tracking daily health metrics including:
+- Sleep patterns
+- Stress levels
+- Physical activity
+- Hydration
+- Symptoms
 
-// Please review the alerts and trends above during consultation.
+Please review the alerts and trends above during consultation.
 
-// ───────────────────────────────────────────
+───────────────────────────────────────────
 
-// DriftCare NG | Preventive Health for Nigeria
-// Not a substitute for professional medical advice.
+DriftCare NG | Preventive Health for Nigeria
+Not a substitute for professional medical advice.
 
-// ═══════════════════════════════════════════
-// `;
-// }
+═══════════════════════════════════════════
+`;
+}

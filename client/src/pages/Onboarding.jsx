@@ -1,23 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+import { Input } from "../Components/ui/input";
+import { Label } from "../Components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../components/ui/select";
-import { Checkbox } from "../components/ui/checkbox";
+} from "../Components/ui/select";
+import { Checkbox } from "../Components/ui/checkbox";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/card";
+} from "../Components/ui/card";
 import { saveUserProfile, calculateBMI, getUserAuth } from "../lib/storage";
 import { Heart, Sparkles } from "lucide-react";
 import { toast } from "sonner";

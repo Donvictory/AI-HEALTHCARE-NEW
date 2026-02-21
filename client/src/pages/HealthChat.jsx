@@ -1,26 +1,37 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Textarea } from "../components/ui/textarea";
-import { Alert, AlertDescription } from "../components/ui/alert";
+} from "../Components/ui/card";
+import { Button } from "../Components/ui/button";
+import { Input } from "../Components/ui/input";
+import { Textarea } from "../Components/ui/textarea";
+import { Alert, AlertDescription } from "../Components/ui/alert";
 import {
   saveChatMessage,
   getChatMessages,
   getUserProfile,
 } from "../lib/storage";
-import { Bot, Send, Mic, MicOff, User } from "lucide-react";
+import {
+  Bot,
+  Send,
+  Mic,
+  MicOff,
+  User,
+  AlertTriangle,
+  Home,
+} from "lucide-react";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "motion/react";
+// eslint-disable-next-line no-unused-vars
+import { motion, AnimatePresence } from "framer-motion";
 
 export function HealthChat() {
-  const [messages, setMessages] = useState([]);
+  const navigate = useNavigate();
+  const [messages, setMessages] = useState(() => getChatMessages());
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -29,8 +40,7 @@ export function HealthChat() {
   const audioChunksRef = useRef([]);
 
   useEffect(() => {
-    const existingMessages = getChatMessages();
-    setMessages(existingMessages);
+    // Initialized from storage
   }, []);
 
   useEffect(() => {
@@ -144,7 +154,7 @@ export function HealthChat() {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
+        const _audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
         });
         toast.info(
@@ -156,7 +166,7 @@ export function HealthChat() {
       mediaRecorder.start();
       setIsRecording(true);
       toast.success("Recording started...");
-    } catch (error) {
+    } catch {
       toast.error(
         "Microphone access denied. Please enable microphone permissions.",
       );
@@ -174,10 +184,169 @@ export function HealthChat() {
   };
 
   return (
-    // ✅ JSX rendering remains EXACTLY the same as your original
-    // (No content/UI changes were made below this point)
-    <div className="min-h-screen p-4 pb-24 bg-gradient-to-b from-emerald-50 to-white">
-      {/* Rest of JSX remains unchanged */}
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-emerald-50 to-white">
+      {/* Header */}
+      <header className="bg-white border-b border-emerald-100 p-4 sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-emerald-100 p-2 rounded-full">
+              <Bot className="w-6 h-6 text-emerald-600" />
+            </div>
+            <div>
+              <h1 className="font-bold text-gray-900">Health Companion</h1>
+              <p className="text-xs text-emerald-600 flex items-center gap-1">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                Online & Ready to Help
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/dashboard")}
+          >
+            <Home className="w-5 h-5" />
+          </Button>
+        </div>
+      </header>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="max-w-2xl mx-auto">
+          <AnimatePresence initial={false}>
+            {messages.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-12 space-y-4"
+              >
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-50 inline-block max-w-sm">
+                  <Bot className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
+                  <h2 className="font-semibold text-lg text-gray-900">
+                    Hello! I'm your AI health companion.
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-2">
+                    I can help answer questions about common symptoms, explain
+                    health terms, and provide context for your tracked health
+                    metrics.
+                  </p>
+                  <p className="text-xs text-emerald-600 mt-4 font-medium italic">
+                    "How many glasses of water should I drink in this Lagos
+                    heat?"
+                  </p>
+                </div>
+              </motion.div>
+            ) : (
+              messages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} mb-4`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-2xl p-4 shadow-sm ${
+                      message.role === "user"
+                        ? "bg-emerald-600 text-white rounded-tr-none"
+                        : "bg-white text-gray-800 border border-emerald-50 rounded-tl-none"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      {message.role === "assistant" ? (
+                        <Bot className="w-3 h-3 opacity-50" />
+                      ) : (
+                        <User className="w-3 h-3 opacity-50" />
+                      )}
+                      <span className="text-[10px] uppercase tracking-wider font-bold opacity-50">
+                        {message.role === "assistant" ? "Companion" : "You"}
+                      </span>
+                    </div>
+                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    <div className={`text-[10px] mt-2 opacity-50 text-right`}>
+                      {new Date(message.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+
+            {isTyping && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-2 text-emerald-500 p-4 max-w-2xl mx-auto"
+              >
+                <div className="flex gap-1">
+                  <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" />
+                </div>
+                <span className="text-xs font-semibold">
+                  Companion is thinking...
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Input Area */}
+      <div className="p-4 bg-white border-t border-emerald-100 pb-24">
+        <div className="max-w-2xl mx-auto">
+          <Alert className="mb-4 bg-amber-50 border-amber-200 text-amber-800 py-2">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="text-[10px] leading-tight font-medium">
+              Not a medical diagnosis. For emergencies, please call 112 or visit
+              a hospital.
+            </AlertDescription>
+          </Alert>
+
+          <div className="flex gap-2 items-end">
+            <div className="flex-1 relative">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask me anything..."
+                className="min-h-[44px] max-h-32 pr-12 focus:ring-emerald-500 focus:border-emerald-500 rounded-xl"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onMouseDown={startRecording}
+                onMouseUp={stopRecording}
+                onMouseLeave={stopRecording}
+                className={`absolute right-3 bottom-3 p-1 rounded-full transition-colors ${
+                  isRecording
+                    ? "text-red-500 bg-red-50 animate-pulse outline-red-500"
+                    : "text-gray-400 hover:text-emerald-500"
+                }`}
+              >
+                {isRecording ? (
+                  <MicOff className="w-5 h-5" />
+                ) : (
+                  <Mic className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+            <Button
+              onClick={handleSend}
+              disabled={!input.trim() || isTyping}
+              className="rounded-xl h-11 px-5"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
