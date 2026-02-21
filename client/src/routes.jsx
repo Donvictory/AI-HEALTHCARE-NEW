@@ -2,7 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/SignUp";
 import { Onboarding } from "./pages/Onboarding";
-import { Dashboard } from "./pages/CheckIn";
+import { Dashboard } from "./pages/Dashboard";
 import { DailyCheckIn } from "./pages/DailyCheckIn";
 import { Profile } from "./pages/Profile";
 import { EditProfile } from "./pages/EditProfile";

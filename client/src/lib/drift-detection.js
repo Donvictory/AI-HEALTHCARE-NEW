@@ -2,40 +2,108 @@
  * Logic to detect "health drift" (declining trends) from check-in history
  */
 
-export const detectDrift = (history) => {
-  if (!history || history.length < 3) return { degree: 0, status: "stable" };
+export const detectDrift = (history, profile) => {
+  // Default values for cases with no data
+  if (!history || history.length === 0) {
+    return {
+      driftLevel: "optimal",
+      resilienceScore: 100,
+      alerts: [],
+    };
+  }
 
-  // Sort by date descending
-  const sorted = [...history].sort(
-    (a, b) => new Date(b.date) - new Date(a.date),
+  // Extract latest metrics
+  const latest = history[history.length - 1];
+
+  // Calculate a basic resilience score (0-100)
+  // Factors: Stress (inverse), Mood, Sleep, Activity, Hydration
+  const stressFactor = (10 - latest.stressLevel) * 2; // 0-20
+  const moodFactor = latest.mood * 2; // 0-20
+  const sleepFactor = Math.min((latest.hoursSlept / 8) * 20, 20); // 0-20
+  const activityFactor = Math.min((latest.physicalActivity / 30) * 20, 20); // 0-20
+  const hydrationFactor = Math.min((latest.waterIntake / 8) * 20, 20); // 0-20
+
+  const resilienceScore = Math.round(
+    stressFactor + moodFactor + sleepFactor + activityFactor + hydrationFactor,
   );
 
-  const moods = sorted.map((c) => c.mood).filter((m) => m !== undefined);
-  if (moods.length < 3) return { degree: 0, status: "stable" };
+  // Detect Drift Level
+  // We compare the latest check-in to previous ones if they exist
+  let driftLevel = "optimal";
+  const alerts = [];
 
-  // Calculate moving average trend
-  const latestBatch = moods.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
-  const previousBatch = moods.slice(1, 4).reduce((a, b) => a + b, 0) / 3;
+  if (history.length >= 3) {
+    const recentAvgMood =
+      history.slice(-3).reduce((acc, curr) => acc + curr.mood, 0) / 3;
+    const prevAvgMood =
+      history.length >= 6
+        ? history.slice(-6, -3).reduce((acc, curr) => acc + curr.mood, 0) / 3
+        : history[0].mood;
 
-  const diff = previousBatch - latestBatch;
+    const moodDrift = prevAvgMood - recentAvgMood;
 
-  if (diff > 0.5)
-    return { degree: Math.min(diff * 20, 100), status: "warning" };
-  if (moods[0] <= 2) return { degree: 40, status: "caution" };
+    if (moodDrift > 2 || resilienceScore < 40) {
+      driftLevel = "critical";
+      alerts.push({
+        severity: "high",
+        message: "Significant decline detected in your adaptive capacity.",
+        recommendation:
+          "Please consider reaching out to a professional or taking an immediate rest day.",
+      });
+    } else if (moodDrift > 1 || resilienceScore < 60) {
+      driftLevel = "concern";
+      alerts.push({
+        severity: "medium",
+        message: "Your health patterns are showing a concerning shift.",
+        recommendation:
+          "Try to prioritize sleep and hydration over the next 48 hours.",
+      });
+    } else if (moodDrift > 0.5 || resilienceScore < 80) {
+      driftLevel = "watch";
+      alerts.push({
+        severity: "low",
+        message: "Minor drift detected in your daily metrics.",
+        recommendation:
+          "Keep an eye on your stress levels and ensure you're taking short breaks.",
+      });
+    }
+  }
 
-  return { degree: 0, status: "stable" };
+  // Personal context alerts (e.g., BMI)
+  if (profile?.bmi > 30) {
+    alerts.push({
+      severity: "low",
+      message: "Your BMI is in the high range.",
+      recommendation:
+        "Consult with a nutritionist to align your diet with your health goals.",
+    });
+  }
+
+  return {
+    driftLevel,
+    resilienceScore,
+    alerts,
+  };
 };
 
-export const generateContextualMessage = (status, profile) => {
+export const generateContextualMessage = (
+  driftLevel,
+  resilienceScore,
+  profile,
+) => {
   const name = profile?.name || "there";
 
-  switch (status) {
-    case "warning":
-      return `Hey ${name}, I've noticed a slight decline in your energy levels over the last few days. It might be worth taking a lighter day today.`;
-    case "caution":
-      return `Hi ${name}, you've reported feeling a bit low today. Remember that hydration and a short walk can sometimes help reset your mood.`;
-    case "stable":
-    default:
-      return `Looking good, ${name}! Your consistency is showing in your metrics. Keep it up!`;
+  if (resilienceScore > 80 && driftLevel === "optimal") {
+    return `You're doing great, ${name}! Your resilience tank is full and your patterns are stable.`;
   }
+
+  if (driftLevel === "critical") {
+    return `Hey ${name}, your metrics suggest you're under significant pressure. It's time to prioritize your recovery.`;
+  }
+
+  if (driftLevel === "concern" || driftLevel === "watch") {
+    return `Hi ${name}, I've noticed some shifts in your health patterns. Let's focus on small wins today.`;
+  }
+
+  return `Welcome back, ${name}. Keep recording your daily check-ins to unlock deeper insights.`;
 };

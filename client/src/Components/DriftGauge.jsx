@@ -14,7 +14,7 @@ export function DriftGauge({ level }) {
     },
   };
 
-  const current = levels[level];
+  const current = levels[level] || levels.optimal;
 
   return (
     <div className="flex flex-col items-center">

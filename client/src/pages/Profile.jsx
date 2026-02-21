@@ -167,7 +167,10 @@ export function Profile() {
                     BMI
                   </p>
                   <p className="text-sm font-medium">
-                    {profile.bmi?.toFixed(1)} kg/m²
+                    {typeof profile.bmi === "number"
+                      ? profile.bmi.toFixed(1)
+                      : profile.bmi || "0.0"}{" "}
+                    kg/m²
                   </p>
                 </div>
               </div>
