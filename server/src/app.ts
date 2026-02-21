@@ -4,7 +4,6 @@ import cookieParser from "cookie-parser";
 import { globalErrorHandler } from "./middlewares/error.middleware";
 import { AppError } from "./utils/app-error.util";
 import v1Routes from "./routes/v1.route";
-import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.config";
 
 const app: Express = express();
@@ -21,8 +20,34 @@ app.get("/", (_, res) => {
     .json({ status: "success", message: "Welcome to AI-HEALTHCARE-NEW API" });
 });
 
-// Swagger UI
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Swagger UI (CDN-hosted — works on Vercel serverless)
+app.get("/api-docs", (_req: Request, res: Response) => {
+  res.setHeader("Content-Type", "text/html");
+  res.send(`<!DOCTYPE html>
+<html>
+  <head>
+    <title>AI Healthcare API Docs</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script>
+      window.onload = () => {
+        SwaggerUIBundle({
+          spec: ${JSON.stringify(swaggerSpec)},
+          dom_id: '#swagger-ui',
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+          layout: 'BaseLayout',
+          deepLinking: true,
+        });
+      };
+    </script>
+  </body>
+</html>`);
+});
 
 app.use("/api/v1", v1Routes);
 
