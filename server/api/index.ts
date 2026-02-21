@@ -1,14 +1,22 @@
+// Register tsconfig path aliases for Vercel's runtime
+import { register } from "tsconfig-paths";
+import { join } from "path";
+
+// Read tsconfig and register path mappings
+register({
+  baseUrl: join(__dirname, ".."),
+  paths: { "@/*": ["src/*"] },
+});
+
 import app from "../src/app";
 import connectToDatabase from "../src/config/db.config";
-import { connectRedis } from "../src/config/redis.config";
 
 let isDbConnected = false;
 
-// Connect to external services concurrently (Cold Start optimization)
 const initializeServices = async () => {
   if (!isDbConnected) {
     try {
-      await Promise.all([connectToDatabase(), connectRedis()]);
+      await connectToDatabase();
       isDbConnected = true;
       console.log(
         "Services initialized successfully in Serverless environment",
@@ -24,7 +32,6 @@ const initializeServices = async () => {
 export default async (req: any, res: any) => {
   try {
     await initializeServices();
-    // Expose the raw Express `app` instance directly to Vercel
     return app(req, res);
   } catch (error) {
     console.error("Serverless Function Error:", error);
