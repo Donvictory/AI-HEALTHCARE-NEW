@@ -14,22 +14,28 @@ export default async (req: any, res: any) => {
   try {
     await initializeServices();
 
-    // Vercel may pre-read the body as a Buffer before passing to Express.
-    // If req.body is already set by Vercel (as a Buffer or string), attach it
-    // so Express's json() parser can re-use it.
-    if (req.body && typeof req.body !== "object") {
-      try {
-        req.body = JSON.parse(req.body.toString());
-      } catch {
-        // Not JSON, leave as-is
+    // Vercel pre-reads the request body before Express sees it.
+    // body-parser (used by express.json()) checks req._body to know if body
+    // is already parsed. If it's not set, it tries to re-read the exhausted
+    // stream and overwrites req.body with {}.
+    if (req.body !== undefined) {
+      // Body is already an object (pre-parsed by Vercel)
+      if (typeof req.body === "object") {
+        req._body = true; // Tell body-parser: skip, already done
+      } else {
+        // Body is a string or Buffer — parse it ourselves
+        try {
+          req.body = JSON.parse(req.body.toString());
+          req._body = true;
+        } catch {
+          // Non-JSON body, leave as-is
+        }
       }
     }
 
     return app(req, res);
   } catch (error) {
     console.error("Serverless Function Error:", error);
-    res
-      .status(500)
-      .json({ error: "Internal Server Error during initialization" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
