@@ -1,9 +1,9 @@
 import "dotenv/config";
-import connectToDatabase from "../config/db.config";
-import { MongooseRepository } from "../utils/crud.util";
+import connectToDatabase from "@/config/db.config";
+import { MongooseRepository } from "@/utils/crud.util";
 import bcrypt from "bcrypt";
-import UserModel, { IUser } from "../modules/user/user.model";
-import { generateUsers } from "./seeding/users.seeder";
+import UserModel, { IUser } from "@/modules/user/user.model";
+import { generateUsers } from "@/scripts/seeding/users.seeder";
 
 const seedData = async () => {
   try {

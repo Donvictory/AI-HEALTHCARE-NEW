@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
-import { MongooseRepository } from "../../utils/crud.util";
-import UserModel, { IUser } from "./user.model";
-import { AppError } from "../../utils/app-error.util";
-import appConfig from "../../config/app.config";
-import { UserRole } from "./user.entity";
+import { MongooseRepository } from "@/utils/crud.util";
+import UserModel, { IUser } from "@/modules/user/user.model";
+import { AppError } from "@/utils/app-error.util";
+import { UserRole } from "@/modules/user/user.entity";
+import { appConfig } from "@/config/app.config";
 
 export class UserService {
   private repo: MongooseRepository<IUser>;
@@ -54,5 +54,11 @@ export class UserService {
     const user = await this.repo.findById(id);
     if (!user) throw new AppError("User not found", 404);
     return user;
+  }
+
+  async updateUserById(id: string, updateData: Partial<IUser>) {
+    const updatedUser = await this.repo.updateById(id, updateData);
+    if (!updatedUser) throw new AppError("User not found", 404);
+    return updatedUser;
   }
 }

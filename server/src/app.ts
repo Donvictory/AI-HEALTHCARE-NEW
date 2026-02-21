@@ -1,8 +1,11 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
-import { globalErrorHandler } from "./middlewares/error.middleware";
-import { AppError } from "./utils/app-error.util";
-import userRouter from "./modules/user/user.route";
+import { globalErrorHandler } from "@/middlewares/error.middleware";
+import { AppError } from "@/utils/app-error.util";
+import v1Routes from "@/routes/v1.route";
+
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "@/config/swagger.config";
 
 const app: Express = express();
 
@@ -11,12 +14,15 @@ app.use(cors());
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
+// Swagger UI
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Routes
 app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({ status: "success", message: "Server is healthy" });
 });
 
-app.use("/api/v1/users", userRouter);
+app.use("/api/v1", v1Routes);
 
 // Unhandled Routes
 app.all("*", (req: Request, res: Response, next) => {

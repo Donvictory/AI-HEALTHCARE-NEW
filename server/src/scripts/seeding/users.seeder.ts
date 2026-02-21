@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
-import { MongooseRepository } from "../../utils/crud.util";
-import { IUser } from "../../modules/user/user.model";
-import { UserRole } from "../../modules/user/user.entity";
+import { MongooseRepository } from "@/utils/crud.util";
+import { IUser } from "@/modules/user/user.model";
+import { UserRole } from "@/modules/user/user.entity";
 
 export const generateUsers = async (
   count: number,

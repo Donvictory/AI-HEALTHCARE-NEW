@@ -1,7 +1,7 @@
-import { IAIProvider } from "./ai.provider";
-import { OpenRouterProvider } from "./providers/openrouter.provider";
-import appConfig from "../../config/app.config";
-import { AppError } from "../../utils/app-error.util";
+import { IAIProvider } from "@/modules/ai/ai.provider";
+import { OpenRouterProvider } from "@/modules/ai/providers/openrouter.provider";
+import { appConfig } from "@/config/app.config";
+import { AppError } from "@/utils/app-error.util";
 
 export class AIService {
   private providers: Map<string, IAIProvider> = new Map();

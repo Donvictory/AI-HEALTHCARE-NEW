@@ -1,21 +1,17 @@
 import app from "./app";
-import appConfig from "./config/app.config";
-import connectToDatabase from "./config/db.config";
 import { connectRedis } from "./config/redis.config";
+import { appConfig } from "./config/app.config";
+import connectToDatabase from "./config/db.config";
+
+const PORT = appConfig.port;
 
 const startServer = async () => {
   try {
-    // 1. Connect to Database
     await connectToDatabase();
+    // await connectRedis();
 
-    // 2. Connect to Redis (Caching Engine)
-    await connectRedis();
-
-    // 3. Start Server
-    app.listen(appConfig.port, () => {
-      console.log(
-        `Server running in ${appConfig.env} mode on port ${appConfig.port}`,
-      );
+    app.listen(PORT, () => {
+      console.log(`Server running in ${appConfig.env} mode on port ${PORT}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

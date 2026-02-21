@@ -1,7 +1,7 @@
 import OpenAI from "openai";
-import { IAIProvider } from "../ai.provider";
-import appConfig from "../../../config/app.config";
-import { AppError } from "../../../utils/app-error.util";
+import { IAIProvider } from "@/modules/ai/ai.provider";
+import { appConfig } from "@/config/app.config";
+import { AppError } from "@/utils/app-error.util";
 
 export class OpenRouterProvider implements IAIProvider {
   private openai: OpenAI;
