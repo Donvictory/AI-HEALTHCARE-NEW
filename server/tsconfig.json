@@ -4,10 +4,6 @@
     "target": "es2022",
     "module": "commonjs",
     "moduleResolution": "node",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { MediaController } from "./media.controller";
-import { uploadMedia } from "@/middlewares/upload.middleware";
-import { protect } from "@/middlewares/auth.middleware";
+import { uploadMedia } from "../../middlewares/upload.middleware";
+import { protect } from "../../middlewares/auth.middleware";
 
 const router = Router();
 const mediaController = new MediaController();

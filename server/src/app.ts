@@ -1,11 +1,10 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
-import { globalErrorHandler } from "@/middlewares/error.middleware";
-import { AppError } from "@/utils/app-error.util";
-import v1Routes from "@/routes/v1.route";
-
+import { globalErrorHandler } from "./middlewares/error.middleware";
+import { AppError } from "./utils/app-error.util";
+import v1Routes from "./routes/v1.route";
 import swaggerUi from "swagger-ui-express";
-import swaggerSpec from "@/config/swagger.config";
+import swaggerSpec from "./config/swagger.config";
 
 const app: Express = express();
 

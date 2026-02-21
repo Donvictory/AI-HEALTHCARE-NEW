@@ -1,6 +1,6 @@
 import express from "express";
-import userRoutes from "@/modules/user/user.route";
-import mediaRoutes from "@/modules/media/media.route";
+import userRoutes from "../modules/user/user.route";
+import mediaRoutes from "../modules/media/media.route";
 
 const router = express.Router();
 

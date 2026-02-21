@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { catchAsync } from "@/utils/catch-async.util";
-import { sendSuccess } from "@/utils/api-response.util";
-import { AppError } from "@/utils/app-error.util";
+import { catchAsync } from "../../utils/catch-async.util";
+import { sendSuccess } from "../../utils/api-response.util";
+import { AppError } from "../../utils/app-error.util";
 
 // Temporary interface until @types/multer resolves
 interface MulterRequest extends Request {

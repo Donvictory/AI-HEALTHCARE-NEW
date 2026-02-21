@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { redisClient } from "@/config/redis.config";
+import { redisClient } from "../config/redis.config";
 
 export const cacheApi = (durationInSeconds: number = 3600) => {
   return async (req: Request, res: Response, next: NextFunction) => {

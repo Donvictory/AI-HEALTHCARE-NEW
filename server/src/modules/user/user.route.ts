@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { UserController } from "@/modules/user/user.controller";
+import { UserController } from "./user.controller";
 import {
   createUserValidator,
   loginValidator,
   updateProfileValidator,
-} from "@/modules/user/user.validator";
-import { protect, restrictTo } from "@/middlewares/auth.middleware";
-import { validateRequest } from "@/middlewares/validate-request.middleware";
-import { UserRole } from "@/modules/user/user.entity";
-import { cacheApi } from "@/middlewares/cache.middleware";
+} from "./user.validator";
+import { protect, restrictTo } from "../../middlewares/auth.middleware";
+import { validateRequest } from "../../middlewares/validate-request.middleware";
+import { UserRole } from "./user.entity";
+import { cacheApi } from "../../middlewares/cache.middleware";
 
 const router = Router();
 const userController = new UserController();

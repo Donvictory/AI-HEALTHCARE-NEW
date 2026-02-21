@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
-import { MongooseRepository } from "@/utils/crud.util";
-import UserModel, { IUser } from "@/modules/user/user.model";
-import { AppError } from "@/utils/app-error.util";
-import { UserRole } from "@/modules/user/user.entity";
-import { appConfig } from "@/config/app.config";
+import { MongooseRepository } from "../../utils/crud.util";
+import UserModel, { IUser } from "./user.model";
+import { AppError } from "../../utils/app-error.util";
+import { UserRole } from "./user.entity";
+import { appConfig } from "../../config/app.config";
 
 export class UserService {
   private repo: MongooseRepository<IUser>;

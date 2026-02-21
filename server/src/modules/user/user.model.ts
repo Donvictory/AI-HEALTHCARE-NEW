@@ -5,7 +5,7 @@ import {
   Gender,
   HealthCondition,
   FamilyHealthHistory,
-} from "@/modules/user/user.entity";
+} from "./user.entity";
 import bcrypt from "bcrypt";
 
 export interface IUser extends Omit<IUserEntity, "_id">, Document {}
