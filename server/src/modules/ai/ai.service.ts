@@ -1,6 +1,6 @@
 import { IAIProvider } from "./ai.provider";
 import { OpenRouterProvider } from "./providers/openrouter.provider";
-import appConfig from "../../config/app.config";
+import { appConfig } from "../../config/app.config";
 import { AppError } from "../../utils/app-error.util";
 
 export class AIService {

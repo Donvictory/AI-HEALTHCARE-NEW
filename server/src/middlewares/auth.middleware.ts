@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AppError } from "../utils/app-error.util";
-import appConfig from "../config/app.config";
+import { appConfig } from "../config/app.config";
 import UserModel from "../modules/user/user.model";
 import { UserRole } from "../modules/user/user.entity";
 

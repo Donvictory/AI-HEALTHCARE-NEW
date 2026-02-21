@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+jspm_packages/
+.npm
+.yarn/cache
+
+# Build/Generated files
+build/
+.next/
+.nuxt/
+coverage/
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE/System
+.DS_Store
+.vscode/
+.idea/
