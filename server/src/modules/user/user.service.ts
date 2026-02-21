@@ -4,6 +4,7 @@ import UserModel, { IUser } from "./user.model";
 import { AppError } from "../../utils/app-error.util";
 import { UserRole } from "./user.entity";
 import { appConfig } from "../../config/app.config";
+import { RegisterDto, LoginDto } from "./user.dto";
 
 export class UserService {
   private repo: MongooseRepository<IUser>;
@@ -12,19 +13,35 @@ export class UserService {
     this.repo = new MongooseRepository<IUser>(UserModel);
   }
 
-  private signToken(id: string) {
+  // ─── Token Signing ──────────────────────────────────────────────────────────
+
+  private signAccessToken(id: string): string {
     return jwt.sign({ id }, appConfig.jwt.accessSecret, {
       expiresIn: appConfig.jwt
         .accessTokenExpiresIn as jwt.SignOptions["expiresIn"],
     });
   }
 
-  async registerUser(data: Partial<IUser>) {
-    // Check if user exists
+  private signRefreshToken(id: string): string {
+    return jwt.sign({ id }, appConfig.jwt.refreshSecret, {
+      expiresIn: appConfig.jwt
+        .refreshTokenExpiresIn as jwt.SignOptions["expiresIn"],
+    });
+  }
+
+  private signTokenPair(id: string) {
+    return {
+      accessToken: this.signAccessToken(id),
+      refreshToken: this.signRefreshToken(id),
+    };
+  }
+
+  // ─── Auth Methods ───────────────────────────────────────────────────────────
+
+  async registerUser(data: RegisterDto) {
     const existing = await this.repo.findOne({ email: data.email });
     if (existing) throw new AppError("Email already in use", 400);
 
-    // Default role is USER if not provided
     const newUser = await UserModel.create({
       name: data.name,
       email: data.email,
@@ -32,19 +49,42 @@ export class UserService {
       role: data.role || UserRole.USER,
     });
 
-    const token = this.signToken(newUser._id!.toString());
-    return { user: newUser, token };
+    const tokens = this.signTokenPair(newUser._id!.toString());
+    return { user: newUser, ...tokens };
   }
 
-  async loginUser(email: string, password: string) {
-    const user = await UserModel.findOne({ email }).select("+password");
-    if (!user || !(await (user as any).correctPassword(password))) {
+  async loginUser(data: LoginDto) {
+    const user = await UserModel.findOne({ email: data.email }).select(
+      "+password",
+    );
+    if (!user || !(await (user as any).correctPassword(data.password))) {
       throw new AppError("Incorrect email or password", 401);
     }
 
-    const token = this.signToken(user._id!.toString());
-    return { user, token };
+    const tokens = this.signTokenPair(user._id!.toString());
+    return { user, ...tokens };
   }
+
+  async refreshAccessToken(refreshToken: string) {
+    try {
+      const decoded = jwt.verify(refreshToken, appConfig.jwt.refreshSecret) as {
+        id: string;
+      };
+
+      const user = await this.repo.findById(decoded.id);
+      if (!user || !user.isActive) {
+        throw new AppError("User no longer exists or is inactive", 401);
+      }
+
+      const accessToken = this.signAccessToken(decoded.id);
+      return { accessToken };
+    } catch (err) {
+      if (err instanceof AppError) throw err;
+      throw new AppError("Invalid or expired refresh token", 401);
+    }
+  }
+
+  // ─── User Methods ───────────────────────────────────────────────────────────
 
   async getAllUsers() {
     return this.repo.findMany({});

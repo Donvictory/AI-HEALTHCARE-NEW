@@ -6,43 +6,54 @@ import { sendSuccess } from "../../utils/api-response.util";
 const userService = new UserService();
 
 export class UserController {
+  // ─── Auth ──────────────────────────────────────────────────────────────────
+
   register = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      // NOTE: Removed validationResult check as it is now handled by validateRequest middleware
-
-      const { user, token } = await userService.registerUser(req.body);
-
-      // Remove password from output
+      const { user, accessToken, refreshToken } =
+        await userService.registerUser(req.body);
       user.password = undefined;
-
-      sendSuccess(res, { token, user }, "User registered successfully", 201);
+      sendSuccess(
+        res,
+        { accessToken, refreshToken, user },
+        "User registered successfully",
+        201,
+      );
     },
   );
 
   login = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      // NOTE: Removed validationResult check here too
-
-      const { email, password } = req.body;
-      const { user, token } = await userService.loginUser(email, password);
-
+      const { user, accessToken, refreshToken } = await userService.loginUser(
+        req.body,
+      );
       user.password = undefined;
-
-      sendSuccess(res, { token, user }, "Login successful", 200);
-    },
-  );
-
-  getAll = catchAsync(
-    async (req: Request, res: Response, next: NextFunction) => {
-      const users = await userService.getAllUsers();
       sendSuccess(
         res,
-        { results: users.length, users },
-        "Users retrieved successfully",
+        { accessToken, refreshToken, user },
+        "Login successful",
         200,
       );
     },
   );
+
+  refreshToken = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { refreshToken } = req.body;
+      const { accessToken } =
+        await userService.refreshAccessToken(refreshToken);
+      sendSuccess(res, { accessToken }, "Access token refreshed", 200);
+    },
+  );
+
+  logout = catchAsync(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      // Client should discard tokens. Stateless JWT — no server-side revocation for now.
+      sendSuccess(res, null, "Logged out successfully", 200);
+    },
+  );
+
+  // ─── Profile ───────────────────────────────────────────────────────────────
 
   getMe = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -65,7 +76,21 @@ export class UserController {
       sendSuccess(
         res,
         { user: updatedUser },
-        "User profile updated successfully",
+        "Profile updated successfully",
+        200,
+      );
+    },
+  );
+
+  // ─── Admin ─────────────────────────────────────────────────────────────────
+
+  getAll = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const users = await userService.getAllUsers();
+      sendSuccess(
+        res,
+        { results: users.length, users },
+        "Users retrieved successfully",
         200,
       );
     },

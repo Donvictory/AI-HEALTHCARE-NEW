@@ -4,6 +4,7 @@ import {
   createUserValidator,
   loginValidator,
   updateProfileValidator,
+  refreshTokenValidator,
 } from "./user.validator";
 import { protect, restrictTo } from "../../middlewares/auth.middleware";
 import { validateRequest } from "../../middlewares/validate-request.middleware";
@@ -131,6 +132,52 @@ router.post(
   validateRequest,
   userController.login.bind(userController),
 );
+
+/**
+ * @swagger
+ * /api/v1/users/refresh-token:
+ *   post:
+ *     summary: Get a new access token using a valid refresh token
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: New access token issued
+ *       401:
+ *         description: Invalid or expired refresh token
+ */
+router.post(
+  "/refresh-token",
+  refreshTokenValidator,
+  validateRequest,
+  userController.refreshToken.bind(userController),
+);
+
+/**
+ * @swagger
+ * /api/v1/users/logout:
+ *   post:
+ *     summary: Logout the current user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/logout", protect, userController.logout.bind(userController));
 
 // Protected routes
 router.use(protect);

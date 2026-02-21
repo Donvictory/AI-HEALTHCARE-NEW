@@ -45,3 +45,7 @@ export const updateProfileValidator = [
   body("hasCompletedDailyChecks").optional().isBoolean(),
   body("currentDailyCheckStep").optional().isNumeric(),
 ];
+
+export const refreshTokenValidator = [
+  body("refreshToken").notEmpty().withMessage("Refresh token is required"),
+];
