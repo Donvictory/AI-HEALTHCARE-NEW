@@ -10,7 +10,7 @@ const app: Express = express();
 
 // Middlewares
 const ALLOWED_ORIGINS = [
-  "https://drift-care.vercel.app",
+  "https://drift-care-backend.vercel.app",
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:3002",
