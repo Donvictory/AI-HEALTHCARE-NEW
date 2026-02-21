@@ -14,13 +14,14 @@ app.use(cors());
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
+app.get("/", (_, res) => {
+  res
+    .status(200)
+    .json({ status: "success", message: "Welcome to AI-HEALTHCARE-NEW API" });
+});
+
 // Swagger UI
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-// Routes
-app.get("/health", (req: Request, res: Response) => {
-  res.status(200).json({ status: "success", message: "Server is healthy" });
-});
 
 app.use("/api/v1", v1Routes);
 
