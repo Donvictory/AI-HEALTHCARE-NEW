@@ -1,23 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+import { Input } from "../Components/ui/input";
+import { Label } from "../Components/ui/label";
+import { Button } from "../Components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../components/ui/select";
-import { Checkbox } from "../components/ui/checkbox";
+} from "../Components/ui/select";
+import { Checkbox } from "../Components/ui/checkbox";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/card";
+} from "../Components/ui/card";
 import { saveUserProfile, calculateBMI, getUserAuth } from "../lib/storage";
 import { Heart, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -68,7 +68,7 @@ export function Onboarding() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     age: "",
-    sex: "",
+    gender: "",
     height: "",
     weight: "",
     city: "",
@@ -82,7 +82,7 @@ export function Onboarding() {
     if (step === 1) {
       if (
         !formData.age ||
-        !formData.sex ||
+        !formData.gender ||
         !formData.height ||
         !formData.weight
       ) {
@@ -111,7 +111,7 @@ export function Onboarding() {
       email: auth?.email || "",
       phone: formData.phone,
       age: parseInt(formData.age),
-      sex: formData.sex,
+      gender: formData.gender,
       height: parseFloat(formData.height),
       weight: parseFloat(formData.weight),
       bmi,
@@ -216,11 +216,11 @@ export function Onboarding() {
               </div>
 
               <div>
-                <Label htmlFor="sex">Gender</Label>
+                <Label htmlFor="gender">Gender</Label>
                 <Select
-                  value={formData.sex}
+                  value={formData.gender}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, sex: value })
+                    setFormData({ ...formData, gender: value })
                   }
                 >
                   <SelectTrigger>

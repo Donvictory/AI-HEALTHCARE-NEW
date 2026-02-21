@@ -1,5 +1,4 @@
 import { createBrowserRouter } from "react-router-dom";
-import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/SignUp";
 import { Onboarding } from "./pages/Onboarding";
@@ -10,6 +9,7 @@ import { EditProfile } from "./pages/EditProfile";
 import { DoctorFinder } from "./pages/DoctorFinder";
 import { HealthChat } from "./pages/HealthChat";
 import { NotFound } from "./pages/NotFound";
+import { Layout } from "./Components/Layout";
 
 export const router = createBrowserRouter([
   {

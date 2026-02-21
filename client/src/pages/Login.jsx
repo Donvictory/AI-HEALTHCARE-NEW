@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+import { useNavigate, Link } from "react-router-dom";
+import { Button } from "../Components/ui/button";
+import { Input } from "../Components/ui/input";
+import { Label } from "../Components/ui/label";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/card";
+} from "../Components/ui/card";
 import { getUserAuth, hasCompletedOnboarding } from "../lib/storage";
 import { Heart, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ export function Login() {
 
   const handleLogin = (e) => {
     e.preventDefault();
+    console.log("Login attempt with:", formData.email);
 
     const auth = getUserAuth();
 
@@ -80,6 +81,7 @@ export function Login() {
                   setFormData({ ...formData, email: e.target.value })
                 }
                 required
+                className="py-2 mt-2"
               />
             </div>
 
@@ -94,6 +96,7 @@ export function Login() {
                   setFormData({ ...formData, password: e.target.value })
                 }
                 required
+                className="py-2 mt-2"
               />
             </div>
 
