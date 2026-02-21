@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { globalErrorHandler } from "./middlewares/error.middleware";
 import { AppError } from "./utils/app-error.util";
 import v1Routes from "./routes/v1.route";
@@ -9,7 +10,8 @@ import swaggerSpec from "./config/swagger.config";
 const app: Express = express();
 
 // Middlewares
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
+app.use(cookieParser());
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 

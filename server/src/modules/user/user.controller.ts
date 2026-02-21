@@ -5,6 +5,18 @@ import { sendSuccess } from "../../utils/api-response.util";
 
 const userService = new UserService();
 
+// 7 days in milliseconds
+const REFRESH_TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // HTTPS only in production
+    sameSite: "strict",
+    maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+  });
+};
+
 export class UserController {
   // ─── Auth ──────────────────────────────────────────────────────────────────
 
@@ -13,9 +25,10 @@ export class UserController {
       const { user, accessToken, refreshToken } =
         await userService.registerUser(req.body);
       user.password = undefined;
+      setRefreshTokenCookie(res, refreshToken);
       sendSuccess(
         res,
-        { accessToken, refreshToken, user },
+        { accessToken, user },
         "User registered successfully",
         201,
       );
@@ -28,27 +41,35 @@ export class UserController {
         req.body,
       );
       user.password = undefined;
-      sendSuccess(
-        res,
-        { accessToken, refreshToken, user },
-        "Login successful",
-        200,
-      );
+      setRefreshTokenCookie(res, refreshToken);
+      sendSuccess(res, { accessToken, user }, "Login successful", 200);
     },
   );
 
   refreshToken = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const { refreshToken } = req.body;
-      const { accessToken } =
-        await userService.refreshAccessToken(refreshToken);
+      // Read from httpOnly cookie (preferred) or fallback to body
+      const token = req.cookies?.refreshToken || req.body?.refreshToken;
+      if (!token) {
+        return next(
+          new (await import("../../utils/app-error.util")).AppError(
+            "Refresh token not found",
+            401,
+          ),
+        );
+      }
+      const { accessToken } = await userService.refreshAccessToken(token);
       sendSuccess(res, { accessToken }, "Access token refreshed", 200);
     },
   );
 
   logout = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
-      // Client should discard tokens. Stateless JWT — no server-side revocation for now.
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
       sendSuccess(res, null, "Logged out successfully", 200);
     },
   );
