@@ -1,22 +1,27 @@
-import * as React from "react";
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+"use client";
 
-function cn(...inputs) {
-  return twMerge(clsx(inputs));
-}
+import * as React from "react";
+import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
+import { Check } from "lucide-react";
+
+import { cn } from "./utils";
 
 const Checkbox = React.forwardRef(({ className, ...props }, ref) => (
-  <input
-    type="checkbox"
+  <CheckboxPrimitive.Root
+    ref={ref}
     className={cn(
-      "peer h-4 w-4 shrink-0 rounded-sm border border-emerald-600 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 checked:bg-emerald-600 checked:text-white",
+      "peer h-4 w-4 shrink-0 rounded-sm border border-emerald-600 shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-emerald-600 data-[state=checked]:text-primary-foreground",
       className,
     )}
-    ref={ref}
     {...props}
-  />
+  >
+    <CheckboxPrimitive.Indicator
+      className={cn("flex items-center justify-center text-current")}
+    >
+      <Check className="h-4 w-4" />
+    </CheckboxPrimitive.Indicator>
+  </CheckboxPrimitive.Root>
 ));
-Checkbox.displayName = "Checkbox";
+Checkbox.displayName = CheckboxPrimitive.Root.displayName;
 
 export { Checkbox };

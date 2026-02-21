@@ -140,8 +140,8 @@ export function Profile() {
                   </p>
                   <p className="text-sm font-medium">
                     {profile.age} years •{" "}
-                    {profile.sex?.charAt(0).toUpperCase() +
-                      profile.sex?.slice(1)}
+                    {profile.gender?.charAt(0).toUpperCase() +
+                      profile.gender?.slice(1)}
                   </p>
                 </div>
               </div>
