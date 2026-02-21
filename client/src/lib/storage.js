@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   MESSAGES: "chat_history",
   TASKS: "health_tasks",
   POINTS: "user_points",
+  MEDICAL_REPORTS: "medical_reports",
 };
 
 // --- AUTHENTICATION ---
@@ -154,4 +155,16 @@ export const getChatMessages = () => {
           timestamp: new Date().toISOString(),
         },
       ];
+};
+
+// --- MEDICAL REPORTS ---
+export const saveMedicalReport = (report) => {
+  const reports = getMedicalReports();
+  reports.push(report);
+  localStorage.setItem(STORAGE_KEYS.MEDICAL_REPORTS, JSON.stringify(reports));
+};
+
+export const getMedicalReports = () => {
+  const data = localStorage.getItem(STORAGE_KEYS.MEDICAL_REPORTS);
+  return data ? JSON.parse(data) : [];
 };

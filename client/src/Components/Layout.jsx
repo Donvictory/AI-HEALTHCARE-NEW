@@ -8,6 +8,8 @@ import {
 
 import { Heart, Home, User, Stethoscope, Bot } from "lucide-react";
 
+import { Navbar } from "./Navbar";
+
 export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,10 +54,13 @@ export function Layout() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50">
-      <Outlet />
+      {showNav && <Navbar />}
+      <main className={showNav ? "pt-24" : ""}>
+        <Outlet />
+      </main>
 
       {showNav && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-gray-100 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] z-50">
           <div className="max-w-md mx-auto flex justify-around items-center h-16 px-4">
             <NavButton
               icon={<Home size={24} />}

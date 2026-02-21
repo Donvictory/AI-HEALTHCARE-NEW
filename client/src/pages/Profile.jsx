@@ -1,4 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -25,6 +28,10 @@ import {
   Edit,
   Award,
   LogOut,
+  Sparkles,
+  Rocket,
+  Globe,
+  Database,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -38,15 +45,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../Components/ui/alert-dialog";
+import { motion } from "framer-motion";
 
 export function Profile() {
-  const [profile] = useState(() => getUserProfile());
-  const [totalCheckIns] = useState(() => getDailyCheckIns().length);
-  const [points] = useState(() => getPoints());
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState(null);
+  const [totalCheckIns, setTotalCheckIns] = useState(0);
+  const [points, setPoints] = useState(0);
 
   useEffect(() => {
-    // Only update if external storage changes (e.g. from other tabs)
-    // For now, this is enough to satisfy the lint and be correct.
+    const userProfile = getUserProfile();
+    const checkIns = getDailyCheckIns();
+    const userPoints = getPoints();
+    setProfile(userProfile);
+    setTotalCheckIns(checkIns.length);
+    setPoints(userPoints);
   }, []);
 
   const handleClearData = () => {
@@ -67,8 +80,13 @@ export function Profile() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-emerald-600 font-bold animate-pulse">
+            Loading Profile...
+          </p>
+        </div>
       </div>
     );
   }
@@ -80,207 +98,340 @@ export function Profile() {
   });
 
   return (
-    <div className="min-h-screen p-4 pb-24 bg-gradient-to-b from-emerald-100/50 to-white">
-      <div className="max-w-2xl mx-auto space-y-6 pt-4">
-        {/* Profile Card */}
-        <Card className="border-none shadow-md overflow-hidden bg-emerald-600 text-white">
-          <CardHeader className="flex flex-row items-center gap-4 pb-6">
-            <div className="bg-emerald-500/30 p-4 rounded-3xl border border-white/20">
-              <User className="w-10 h-10" />
+    <div className="min-h-screen p-4 pb-24 bg-gray-50/50">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-6 pt-10"
+        >
+          <div className="relative inline-block">
+            <div className="w-28 h-28 bg-gradient-to-br from-emerald-400 to-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-emerald-200 ring-4 ring-white">
+              <User className="w-14 h-14 text-white" />
             </div>
-            <div>
-              <CardTitle className="text-2xl text-white">
-                {profile.name}
-              </CardTitle>
-              <CardDescription className="text-emerald-100 flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> Member since {joinDate}
-              </CardDescription>
+            <div className="absolute -bottom-2 -right-2 bg-white p-2.5 rounded-2xl shadow-lg border border-gray-100">
+              <Shield className="w-5 h-5 text-emerald-500" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-emerald-500/20 p-3 rounded-2xl border border-white/10">
-                <p className="text-xs text-emerald-100 mb-1">
-                  Total Health Check-ins
-                </p>
-                <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-emerald-200" />
-                  <p className="text-xl font-bold">{totalCheckIns}</p>
-                </div>
-              </div>
-              <div className="bg-emerald-500/20 p-3 rounded-2xl border border-white/10">
-                <p className="text-xs text-emerald-100 mb-1">
-                  Health Reward Points
-                </p>
-                <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-emerald-200" />
-                  <p className="text-xl font-bold">{points}</p>
-                </div>
-              </div>
+          </div>
+          <div>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+              {profile.name}
+            </h1>
+            <p className="text-gray-500 font-bold text-lg">{profile.email}</p>
+            <div className="flex items-center justify-center gap-2 mt-2 text-xs font-black text-gray-400 uppercase tracking-widest">
+              <Calendar className="w-3 h-3" /> Joined {joinDate}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <Button
+            onClick={() => navigate("/edit-profile")}
+            variant="outline"
+            className="rounded-2xl border-gray-200 px-8 py-6 h-auto shadow-sm hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 font-bold transition-all text-base"
+          >
+            <Edit className="w-5 h-5 mr-3" />
+            Edit Profile
+          </Button>
+        </motion.div>
 
-        {/* Personal Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="border-emerald-50 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <User className="w-4 h-4 text-emerald-600" /> Personal Info
+        {/* Stats Overview */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              icon: Calendar,
+              color: "text-emerald-600",
+              bg: "bg-emerald-50",
+              label: "Check-ins",
+              val: totalCheckIns,
+            },
+            {
+              icon: Activity,
+              color: "text-blue-600",
+              bg: "bg-blue-50",
+              label: "Current BMI",
+              val: profile.bmi,
+            },
+            {
+              icon: Heart,
+              color: "text-red-600",
+              bg: "bg-red-50",
+              label: "Years Old",
+              val: profile.age,
+            },
+            {
+              icon: Award,
+              color: "text-yellow-600",
+              bg: "bg-yellow-50",
+              label: "Health XP",
+              val: points,
+            },
+          ].map((stat, i) => (
+            <Card
+              key={i}
+              className="border-none shadow-xl bg-white rounded-3xl overflow-hidden"
+            >
+              <CardContent className="pt-8 text-center px-4 pb-8">
+                <div
+                  className={`${stat.bg} ${stat.color} w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm`}
+                >
+                  <stat.icon className="w-7 h-7" />
+                </div>
+                <div className="text-3xl font-black text-gray-900">
+                  {stat.val}
+                </div>
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
+                  {stat.label}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Info Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card className="border-none shadow-xl bg-white rounded-[2.5rem] overflow-hidden">
+            <CardHeader className="bg-emerald-50/30 border-b border-gray-50 p-8">
+              <CardTitle className="text-xl font-black text-gray-900">
+                Biological Identity
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                  <Edit className="w-4 h-4" />
+            <CardContent className="p-8 space-y-6">
+              {[
+                { label: "Full Name", val: profile.name },
+                { label: "Phone", val: profile.phone || "Not provided" },
+                { label: "Biological Sex", val: profile.sex, cap: true },
+                { label: "Height", val: `${profile.height} cm` },
+                { label: "Weight", val: `${profile.weight} kg` },
+                { label: "Location", val: `${profile.city}, ${profile.state}` },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                >
+                  <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                    {item.label}
+                  </span>
+                  <span
+                    className={`text-sm font-black text-gray-700 ${item.cap ? "capitalize" : ""}`}
+                  >
+                    {item.val}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
-                    Age & Gender
-                  </p>
-                  <p className="text-sm font-medium">
-                    {profile.age} years •{" "}
-                    {profile.gender?.charAt(0).toUpperCase() +
-                      profile.gender?.slice(1)}
-                  </p>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-white rounded-[2.5rem] overflow-hidden">
+            <CardHeader className="bg-blue-50/30 border-b border-gray-50 p-8">
+              <CardTitle className="text-xl font-black text-gray-900">
+                Medical Backdrop
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 space-y-8">
+              <div className="space-y-4">
+                <div className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                  Known Conditions
                 </div>
+                {profile.knownConditions?.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {profile.knownConditions.map((condition) => (
+                      <span
+                        key={condition}
+                        className="px-4 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-black border border-red-200 shadow-sm"
+                      >
+                        {condition}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm font-bold text-gray-400 bg-gray-50 p-4 rounded-2xl border border-dashed">
+                    Zero clinical conditions reported
+                  </p>
+                )}
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                  <MapPin className="w-4 h-4" />
+
+              <div className="space-y-4">
+                <div className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                  Genomic/Family History
                 </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
-                    Location
+                {profile.familyHistory?.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {profile.familyHistory.map((item) => (
+                      <span
+                        key={item}
+                        className="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-black border border-blue-200 shadow-sm"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm font-bold text-gray-400 bg-gray-50 p-4 rounded-2xl border border-dashed">
+                    No family predispositions recorded
                   </p>
-                  <p className="text-sm font-medium">
-                    {profile.city}, {profile.state}
-                  </p>
-                </div>
+                )}
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                  <Heart className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
-                    BMI
-                  </p>
-                  <p className="text-sm font-medium">
-                    {typeof profile.bmi === "number"
-                      ? profile.bmi.toFixed(1)
-                      : profile.bmi || "0.0"}{" "}
-                    kg/m²
-                  </p>
-                </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Privacy & Mission Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Card className="border-none shadow-xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white rounded-[2.5rem] overflow-hidden">
+            <CardHeader className="p-8 pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <Shield className="w-6 h-6 text-emerald-200" />
+                Data Sovereign
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 pt-0 space-y-4">
+              <div className="space-y-3">
+                {[
+                  "Local-first architecture",
+                  "End-to-end encrypted storage",
+                  "Zero third-party sharing",
+                  "Full GDPR/NDPR compliance",
+                ].map((text, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                      <ShieldCheckIcon className="w-3 h-3 text-emerald-100" />
+                    </div>
+                    <span className="text-xs font-bold text-emerald-50">
+                      {text}
+                    </span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-50 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Shield className="w-4 h-4 text-emerald-600" /> Medical Profile
+          <Card className="border-none shadow-xl bg-white rounded-[2.5rem] overflow-hidden">
+            <CardHeader className="p-8 pb-4">
+              <CardTitle className="text-xl font-black text-gray-900">
+                DriftCare Odyssey
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider">
-                    Known Conditions
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {profile.knownConditions?.length > 0 ? (
-                      profile.knownConditions.map((c) => (
-                        <span
-                          key={c}
-                          className="bg-amber-50 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-amber-100"
-                        >
-                          {c}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-gray-400 text-xs italic">
-                        No documented conditions
-                      </span>
-                    )}
-                  </div>
+            <CardContent className="p-8 pt-0 space-y-4">
+              <p className="text-sm font-bold text-gray-600 leading-relaxed">
+                Nigeria's first AI-powered preventive health system. Our focus
+                is high-fidelity drift detection for earlier clinical
+                intervention.
+              </p>
+              <div className="flex items-center gap-2 pt-2">
+                <div className="bg-emerald-100 px-3 py-1 rounded-full text-[10px] font-black text-emerald-700 uppercase">
+                  Version 1.0.0
                 </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider">
-                    Family Health History
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {profile.familyHistory?.length > 0 ? (
-                      profile.familyHistory.map((h) => (
-                        <span
-                          key={h}
-                          className="bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-blue-100"
-                        >
-                          {h}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-gray-400 text-xs italic">
-                        No documented family history
-                      </span>
-                    )}
-                  </div>
+                <div className="bg-blue-100 px-3 py-1 rounded-full text-[10px] font-black text-blue-700 uppercase">
+                  Lagos, NG
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Account Actions */}
-        <Card className="border-red-50 shadow-sm bg-white overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-gray-900">
-              Account Settings
+        {/* Future Integrations */}
+        <Card className="border-none shadow-xl bg-white rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="bg-gray-50 p-8">
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <Rocket className="w-6 h-6 text-purple-600" />
+              Strategic Horizon
             </CardTitle>
+            <CardDescription className="text-gray-500 font-medium">
+              Upcoming decentralized health integrations
+            </CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors border-y border-gray-50"
-            >
-              <LogOut className="w-5 h-5 text-gray-400" />
-              <div className="text-left">
-                <p className="text-sm font-semibold">Logout</p>
-                <p className="text-[10px] text-gray-500">
-                  Securely sign out of your account
-                </p>
+          <CardContent className="p-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              {
+                label: "EMR Sync",
+                detail: "Helium Health Integration",
+                icon: Database,
+              },
+              {
+                label: "HMO Direct",
+                detail: "AXA Mansard / Hygeia Connect",
+                icon: Globe,
+              },
+              {
+                label: "Wearables",
+                detail: "Fitbit & Apple Watch SDK",
+                icon: Activity,
+              },
+              {
+                label: "Localization",
+                detail: "Pidgin & Yoruba Voice AI",
+                icon: Heart,
+              },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100"
+              >
+                <div className="bg-white p-3 rounded-xl shadow-sm">
+                  <item.icon className="w-5 h-5 text-gray-400" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-gray-900 uppercase">
+                    {item.label}
+                  </div>
+                  <div className="text-[10px] font-bold text-gray-400">
+                    {item.detail}
+                  </div>
+                </div>
               </div>
-            </button>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className="border-none shadow-2xl shadow-red-100/50 bg-white rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="bg-red-50 p-8">
+            <CardTitle className="text-xl text-red-600 font-black">
+              System Termination
+            </CardTitle>
+            <CardDescription className="font-bold text-red-400/80">
+              Irreversible destructive actions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 flex flex-col md:flex-row gap-4">
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="flex-1 h-16 rounded-[1.25rem] border-gray-200 font-black text-gray-600 hover:bg-gray-50"
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              Sign Out
+            </Button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <button className="w-full flex items-center gap-3 p-4 hover:bg-red-50 transition-colors text-red-600">
-                  <Trash2 className="w-5 h-5" />
-                  <div className="text-left">
-                    <p className="text-sm font-semibold">Delete Health Data</p>
-                    <p className="text-[10px] text-red-400">
-                      Permanently clear all local check-ins and profile info
-                    </p>
-                  </div>
-                </button>
+                <Button
+                  variant="destructive"
+                  className="flex-1 h-16 rounded-[1.25rem] bg-red-600 hover:bg-red-700 font-black shadow-xl shadow-red-100"
+                >
+                  <Trash2 className="w-5 h-5 mr-3" />
+                  Obliterate All Data
+                </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="rounded-[2rem] border-none shadow-2xl p-8">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action will permanently delete all your health
-                    check-ins, medical history, and profile data from this
-                    device. This cannot be undone.
+                  <AlertDialogTitle className="text-2xl font-black text-gray-900">
+                    Absolute Termination?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-gray-500 font-medium text-base">
+                    You are about to permanently purge your profile,{" "}
+                    {totalCheckIns} records, and all AI insights. This cannot be
+                    recovered.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogFooter className="pt-6">
+                  <AlertDialogCancel className="rounded-2xl h-12 font-bold border-gray-100">
+                    Keep My History
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleClearData}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 rounded-2xl h-12 font-black shadow-lg shadow-red-100"
                   >
-                    Delete Everything
+                    Yes, Purge Everything
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -288,11 +439,32 @@ export function Profile() {
           </CardContent>
         </Card>
 
-        <p className="text-[10px] text-center text-gray-400 pb-8">
-          DriftCare NG Version 1.0.0 • Your data is stored locally on this
-          device
-        </p>
+        <div className="pb-10 pt-4 text-center">
+          <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">
+            DriftCare Engine v1.0.0 • Sovereignty via Local Storage
+          </p>
+        </div>
       </div>
     </div>
+  );
+}
+
+function ShieldCheckIcon(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
   );
 }
