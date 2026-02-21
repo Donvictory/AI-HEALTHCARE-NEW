@@ -5,7 +5,6 @@ jspm_packages/
 .yarn/cache
 
 # Build/Generated files
-dist/
 build/
 .next/
 .nuxt/
