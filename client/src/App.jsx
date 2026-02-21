@@ -9,7 +9,9 @@ function App() {
   return (
     <>
       <div>
-        <h1>AI Healthcare</h1>
+        <h1 className="text-6xl font-bold underline align-center justify-center flex items-center h-screen">
+          AI Healthcare
+        </h1>
       </div>
     </>
   );
