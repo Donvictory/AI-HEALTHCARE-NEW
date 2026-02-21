@@ -1,7 +1,14 @@
 import mongoose from "mongoose";
 import { appConfig } from "./app.config";
 
+let isConnected = false;
+
 const connectToDatabase = async () => {
+  if (isConnected || mongoose.connection.readyState === 1) {
+    console.log("Using existing MongoDB connection");
+    return;
+  }
+
   try {
     const options: mongoose.ConnectOptions = {};
     if (appConfig.db.username && appConfig.db.password) {
@@ -10,6 +17,7 @@ const connectToDatabase = async () => {
     }
 
     await mongoose.connect(appConfig.db.url, options);
+    isConnected = true;
     console.log("Connected to MongoDB");
   } catch (error) {
     console.error("MongoDB Connection Error:", error);
