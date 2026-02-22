@@ -31,8 +31,6 @@ export function ProtectedRoute({ children }) {
 export function OnboardingRoute({ children }) {
   const { data: user, isLoading } = useMe();
 
-  console.log(user);
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">

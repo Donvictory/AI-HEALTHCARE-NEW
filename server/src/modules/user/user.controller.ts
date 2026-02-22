@@ -6,6 +6,41 @@ import { appConfig } from "../../config/app.config";
 
 const userService = new UserService();
 
+// 7 days in milliseconds
+const REFRESH_TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+// 1 hour in milliseconds
+const ACCESS_TOKEN_COOKIE_MAX_AGE = 1 * 60 * 60 * 1000;
+
+const setAuthCookies = (
+  res: Response,
+  accessToken: string,
+  refreshToken: string,
+) => {
+  const isProd = appConfig.env === "production";
+  const cookieOptions: any = {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+  };
+
+  res.cookie("accessToken", accessToken, {
+    ...cookieOptions,
+    maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE,
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    ...cookieOptions,
+    maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+  });
+
+  // Client-side hint (not httpOnly) so JS can check if a session exists
+  res.cookie("is_logged_in", "true", {
+    ...cookieOptions,
+    httpOnly: false,
+    maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+  });
+};
+
 export class UserController {
   // ─── Auth ──────────────────────────────────────────────────────────────────
 
@@ -14,6 +49,7 @@ export class UserController {
       const { user, accessToken, refreshToken } =
         await userService.registerUser(req.body);
       user.password = undefined;
+      setAuthCookies(res, accessToken, refreshToken);
       sendSuccess(
         res,
         { accessToken, refreshToken, user },
@@ -29,6 +65,7 @@ export class UserController {
         req.body,
       );
       user.password = undefined;
+      setAuthCookies(res, accessToken, refreshToken);
       sendSuccess(
         res,
         { accessToken, refreshToken, user },
@@ -40,7 +77,7 @@ export class UserController {
 
   refreshToken = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const token = req.body?.refreshToken;
+      const token = req.cookies?.refreshToken || req.body?.refreshToken;
       if (!token) {
         return next(
           new (await import("../../utils/app-error.util")).AppError(
@@ -51,12 +88,29 @@ export class UserController {
       }
       const { accessToken } = await userService.refreshAccessToken(token);
 
+      const isProd = appConfig.env === "production";
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+        maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE,
+      });
+
       sendSuccess(res, { accessToken }, "Access token refreshed", 200);
     },
   );
 
   logout = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
+      const isProd = appConfig.env === "production";
+      const cookieOptions: any = {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+      };
+      res.clearCookie("refreshToken", cookieOptions);
+      res.clearCookie("accessToken", cookieOptions);
+      res.clearCookie("is_logged_in", { ...cookieOptions, httpOnly: false });
       sendSuccess(res, null, "Logged out successfully", 200);
     },
   );

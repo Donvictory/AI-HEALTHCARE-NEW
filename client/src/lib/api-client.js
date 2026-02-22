@@ -7,9 +7,8 @@ import {
 } from "./storage";
 
 const apiClient = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_URL ||
-    "https://drift-care-backend.vercel.app/api/v1",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1",
+  withCredentials: true,
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
@@ -19,13 +18,6 @@ const apiClient = axios.create({
 // Request interceptor to add the access token to the header
 apiClient.interceptors.request.use(
   (config) => {
-    const token = getAccessToken();
-    console.log(
-      `apiClient: Request to ${config.url} with token: ${token ? "exists" : "none"}`,
-    );
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => Promise.reject(error),
@@ -86,20 +78,21 @@ apiClient.interceptors.response.use(
       }
 
       try {
+        // No body needed as refreshToken is in httpOnly cookie
         const response = await axios.post(
           `${apiClient.defaults.baseURL}/users/refresh-token`,
-          {
-            refreshToken,
-          },
+          {},
+          { withCredentials: true },
         );
 
         const { accessToken } = response.data.data || response.data;
+        // Even if we don't use it in headers, saving to localStorage might be
+        // useful for other legacy parts, but primarily we rely on cookies now.
         saveTokens(accessToken);
 
         isRefreshing = false;
         processQueue(null, accessToken);
 
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
         isRefreshing = false;

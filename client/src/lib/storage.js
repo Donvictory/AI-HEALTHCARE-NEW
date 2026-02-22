@@ -41,7 +41,19 @@ export const clearTokens = () => {
   localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
 };
 
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return null;
+};
+
 export const isAuthenticated = () => {
+  // Check for the non-httpOnly hint cookie first
+  const loginHint = getCookie("is_logged_in");
+  if (loginHint === "true") return true;
+
+  // Fallback to local storage (for legacy or mixed support)
   return !!getAccessToken();
 };
 

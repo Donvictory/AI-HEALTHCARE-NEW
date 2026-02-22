@@ -12,28 +12,8 @@ export const useRegister = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userData) => {
-      try {
-        const response = await apiClient.post("/users/register", userData);
-        return response.data;
-      } catch (error) {
-        // Fallback for Demo/Dev mode if backend is unreachable or failing
-        const isNetworkError = !error.response;
-        const isServerError = error.response?.status >= 500;
-
-        if (isNetworkError || isServerError) {
-          console.warn(
-            `Backend ${isNetworkError ? "unreachable" : "failing"}, using local storage fallback for registration.`,
-          );
-          return {
-            status: "success",
-            data: {
-              user: { ...userData, id: `local-${Date.now()}` },
-              accessToken: "demo-token",
-            },
-          };
-        }
-        throw error;
-      }
+      const response = await apiClient.post("/users/register", userData);
+      return response.data;
     },
     onSuccess: (data) => {
       const user = data.data?.user || data.user;
@@ -52,40 +32,8 @@ export const useLogin = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (credentials) => {
-      try {
-        const response = await apiClient.post("/users/login", credentials);
-        return response.data;
-      } catch (error) {
-        // Fallback for Demo/Dev mode if backend is unreachable or failing
-        const isNetworkError = !error.response;
-        const isServerError = error.response?.status >= 500;
-
-        if (isNetworkError || isServerError) {
-          console.warn(
-            `Backend ${isNetworkError ? "unreachable" : "failing"}, using local storage fallback for login.`,
-          );
-          const localProfile = getUserProfile();
-          if (localProfile && localProfile.email === credentials.email) {
-            return {
-              status: "success",
-              data: { user: localProfile, accessToken: "demo-token" },
-            };
-          }
-          // If no local profile matches, still allow login for demo purposes with a generic user
-          return {
-            status: "success",
-            data: {
-              user: {
-                email: credentials.email,
-                name: "Demo User",
-                isFirstLogin: true,
-              },
-              accessToken: "demo-token",
-            },
-          };
-        }
-        throw error;
-      }
+      const response = await apiClient.post("/users/login", credentials);
+      return response.data;
     },
     onSuccess: (data) => {
       const user = data.data?.user || data.user;
