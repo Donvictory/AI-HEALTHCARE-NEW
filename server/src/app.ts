@@ -10,6 +10,7 @@ const app: Express = express();
 
 // Middlewares
 const ALLOWED_ORIGINS = [
+  "https://driftcare.vercel.app",
   "https://drift-care-backend.vercel.app",
   "http://localhost:5173",
   "http://localhost:5174",
@@ -22,12 +23,9 @@ const ALLOWED_ORIGINS = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. Postman, curl, server-to-server)
-      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS: origin '${origin}' not allowed`));
-      }
+      // Allow all origins (echo the origin) to satisfy 'publicly available' request
+      // while still supporting credentials: true
+      callback(null, true);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
