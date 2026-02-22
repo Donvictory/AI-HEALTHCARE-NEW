@@ -83,6 +83,13 @@ export class UserController {
     },
   );
 
+  getProfile = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const data = await userService.getEnrichedProfile(req.user.id);
+      sendSuccess(res, data, "Enriched profile retrieved successfully", 200);
+    },
+  );
+
   updateMe = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
       const allowedUpdates = { ...req.body };

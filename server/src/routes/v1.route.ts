@@ -3,18 +3,16 @@ import userRoutes from "../modules/user/user.route";
 import mediaRoutes from "../modules/media/media.route";
 import dailyCheckInRoutes from "../modules/daily-check-in/daily-check-in.route";
 import doctorRoutes from "../modules/doctor/doctor.route";
+import dashboardRoutes from "../modules/dashboard/dashboard.route";
+import cronRoutes from "../modules/cron/cron.route";
 
 const router = express.Router();
 
-// Health check
-router.get("/health", (_, res) => {
-  res.status(200).json({ ok: true });
-});
-
-// Mount modules
 router.use("/users", userRoutes);
 router.use("/media", mediaRoutes);
 router.use("/daily-check-ins", dailyCheckInRoutes);
 router.use("/doctors", doctorRoutes);
+router.use("/dashboard", dashboardRoutes);
+router.use("/cron", cronRoutes);
 
 export default router;

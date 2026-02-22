@@ -47,6 +47,8 @@ const UserSchema = new Schema<IUser>(
     ],
     hasCompletedDailyChecks: { type: Boolean, default: false },
     currentDailyCheckStep: { type: Number, default: 1 },
+    healthPoints: { type: Number, default: 0 },
+    isFirstLogin: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

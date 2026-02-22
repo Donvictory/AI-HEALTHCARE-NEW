@@ -5,6 +5,7 @@ import { AppError } from "../../utils/app-error.util";
 import { UserRole } from "./user.entity";
 import { appConfig } from "../../config/app.config";
 import { RegisterDto, LoginDto } from "./user.dto";
+import DailyCheckInModel from "../daily-check-in/daily-check-in.model";
 
 export class UserService {
   private repo: MongooseRepository<IUser>;
@@ -85,6 +86,41 @@ export class UserService {
   }
 
   // ─── User Methods ───────────────────────────────────────────────────────────
+
+  public async getEnrichedProfile(userId: string) {
+    const user = await UserModel.findById(userId).lean();
+    if (!user) throw new AppError("User not found", 404);
+
+    // Calculate BMI
+    let bmi = 0;
+    let bmiCategory = "Unknown";
+    if (user.height && user.weight) {
+      // height in cm, weight in kg. BMI = kg / m^2
+      const heightInMeters = user.height / 100;
+      bmi = parseFloat(
+        (user.weight / (heightInMeters * heightInMeters)).toFixed(1),
+      );
+
+      if (bmi < 18.5) bmiCategory = "Underweight";
+      else if (bmi < 25) bmiCategory = "Normal weight";
+      else if (bmi < 30) bmiCategory = "Overweight";
+      else bmiCategory = "Obese";
+    }
+
+    // Count check-ins
+    const totalCheckIns = await DailyCheckInModel.countDocuments({ userId });
+
+    return {
+      user,
+      stats: {
+        totalCheckIns,
+        bmi,
+        bmiCategory,
+        healthPoints: (user as any).healthPoints || 0,
+        age: user.age,
+      },
+    };
+  }
 
   async getAllUsers() {
     return this.repo.findMany({});

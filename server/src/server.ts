@@ -11,6 +11,10 @@ if (process.env.VERCEL !== "1") {
     try {
       await connectToDatabase();
       // await connectRedis();
+
+      const { initCronJobs } = await import("./cron/cron");
+      initCronJobs();
+
       app.listen(PORT, () => {
         console.log(`Server running in ${appConfig.env} mode on port ${PORT}`);
       });

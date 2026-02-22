@@ -6,20 +6,24 @@ import {
 } from "./daily-check-in.validator";
 import { protect } from "../../middlewares/auth.middleware";
 import { validateRequest } from "../../middlewares/validate-request.middleware";
+import { restrictToCheckInWindow } from "../../middlewares/check-in-window.middleware";
 
 const router = Router();
 const controller = new DailyCheckInController();
 
-// All daily check-in routes are protected
-router.use(protect);
-
-// POST /api/v1/daily-check-ins — Submit a full check-in (all 5 steps at once)
+// POST /api/v1/daily-check-ins - Submit all 5 steps at once
+// Restrictions: Must be logged in AND only allowed after 6pm
 router.post(
   "/",
+  protect,
+  restrictToCheckInWindow,
   createDailyCheckInValidator,
   validateRequest,
   controller.create.bind(controller),
 );
+
+// All daily check-in routes are protected
+router.use(protect);
 
 // GET /api/v1/daily-check-ins — Get all check-ins for the current user
 router.get("/", controller.getAll.bind(controller));

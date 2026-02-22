@@ -157,6 +157,11 @@ const swaggerSpec: OpenAPIV3.Document = {
       name: "Doctors",
       description: "Find doctors by location — state/city based search",
     },
+    {
+      name: "Dashboard",
+      description: "Health metrics overview, resilience tank & drift levels",
+    },
+    { name: "Cron", description: "Automated tasks (Daily reset, etc.)" },
   ],
   paths: {
     // ─── Auth ──────────────────────────────────────────────────────
@@ -295,7 +300,7 @@ const swaggerSpec: OpenAPIV3.Document = {
       },
       patch: {
         tags: ["Users"],
-        summary: "Update my profile (onboarding details)",
+        summary: "Update my profile",
         security: [{ bearerAuth: [] }],
         requestBody: {
           content: {
@@ -326,8 +331,64 @@ const swaggerSpec: OpenAPIV3.Document = {
           },
         },
         responses: {
-          "200": { description: "Profile updated" },
+          "200": { description: "Updated" },
           "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    "/api/v1/users/profile": {
+      get: {
+        tags: ["Users"],
+        summary: "Get my enriched profile (with BMI, healthPoints, check-ins)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Profile retrieved" },
+        },
+      },
+    },
+
+    // ─── Dashboard ────────────────────────────────────────────────
+    "/api/v1/dashboard": {
+      get: {
+        tags: ["Dashboard"],
+        summary: "Get health metrics overview (resilience, drift, radar map)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Metrics retrieved",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    hasCheckedInToday: { type: "boolean" },
+                    resilience: { type: "integer" },
+                    driftLevel: {
+                      type: "string",
+                      enum: ["OPTIMAL", "NOMINAL", "CONCERNING", "CRITICAL"],
+                    },
+                    radarData: { type: "array", items: { type: "object" } },
+                    breakdown: { type: "object" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+
+    // ─── Cron ─────────────────────────────────────────────────────
+    "/api/v1/cron/daily-reset": {
+      get: {
+        tags: ["Cron"],
+        summary: "Trigger manual daily reset (hasCompletedDailyChecks = false)",
+        parameters: [
+          { name: "x-cron-secret", in: "header", schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Reset successful" },
+          "401": { description: "Invalid secret" },
         },
       },
     },
