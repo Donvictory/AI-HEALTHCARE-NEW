@@ -22,7 +22,7 @@ export function Layout() {
   }
 
   const authenticated = !!user;
-  const onboarded = user ? !user.isFirstLogin : false;
+  const onboarded = user ? user.isOnboarded : false;
   // Navigation only shows for logged-in users who finished onboarding and aren't on the landing page
   const showNav = authenticated && onboarded && !isPublicRoute;
 

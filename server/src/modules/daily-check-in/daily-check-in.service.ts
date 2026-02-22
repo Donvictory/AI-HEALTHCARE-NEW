@@ -28,6 +28,7 @@ export class DailyCheckInService {
     await UserModel.findByIdAndUpdate(userId, {
       $inc: { healthPoints: resilience },
       hasCompletedDailyChecks: true,
+      isOnboarded: true,
       isFirstLogin: false, // Completing a daily check-in counts as being "onboarded" or active
     });
 

@@ -27,9 +27,9 @@ export function Login() {
     loginMutation.mutate(formData, {
       onSuccess: (data) => {
         toast.success(`Welcome back! 🎉`);
-        // Use isFirstLogin flag for routing
+        // Use isOnboarded flag for routing
         const user = data.data?.user || data.user;
-        if (user?.isFirstLogin) {
+        if (!user?.isOnboarded) {
           navigate("/onboarding");
         } else {
           navigate("/dashboard");

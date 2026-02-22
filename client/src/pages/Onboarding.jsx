@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "../Components/ui/card";
 import { saveUserProfile, calculateBMI, getUserAuth } from "../lib/storage";
-import { useUpdateMe, useMe } from "../hooks/use-auth";
+import { useOnboard, useMe } from "../hooks/use-auth";
 import {
   Heart,
   Sparkles,
@@ -78,7 +78,7 @@ const familyHistoryOptions = [
 
 export function Onboarding() {
   const navigate = useNavigate();
-  const updateMeMutation = useUpdateMe();
+  const onboardMutation = useOnboard();
   const { data: user, isLoading: userLoading } = useMe();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -94,7 +94,7 @@ export function Onboarding() {
   });
 
   useEffect(() => {
-    if (!userLoading && user && user.isFirstLogin === false) {
+    if (!userLoading && user && user.isOnboarded) {
       navigate("/dashboard");
     }
   }, [user, userLoading, navigate]);
@@ -174,10 +174,9 @@ export function Onboarding() {
       familyHealthHistory: formData.familyHistory
         .map((h) => historyMap[h] || "NONE")
         .filter((h) => h !== "NONE"),
-      isFirstLogin: false,
     };
 
-    updateMeMutation.mutate(payload, {
+    onboardMutation.mutate(payload, {
       onSuccess: (response) => {
         const updatedUser = response.data?.user || response.user;
         saveUserProfile({
@@ -280,7 +279,7 @@ export function Onboarding() {
               <CardHeader className="text-center pt-10 pb-2">
                 <div className="flex justify-center mb-6">
                   <div className="relative">
-                    <div className="bg-emerald-50 w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-sm">
+                    <div className="bg-emerald-50 w-20 h-20 rounded-4xl flex items-center justify-center shadow-sm">
                       <Heart className="w-10 h-10 text-emerald-600 fill-emerald-600" />
                     </div>
                     <div className="absolute -top-2 -right-2 bg-white p-2 rounded-2xl shadow-lg border border-gray-100">
@@ -489,7 +488,7 @@ export function Onboarding() {
                       </Button>
                       <Button
                         onClick={handleNext}
-                        className="flex-[2] h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
+                        className="flex-2 h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
                       >
                         Pathology <ChevronRight className="ml-2 w-5 h-5" />
                       </Button>
@@ -588,10 +587,10 @@ export function Onboarding() {
                       </Button>
                       <Button
                         onClick={handleComplete}
-                        disabled={updateMeMutation.isPending}
-                        className="flex-[2] h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg transition-all active:scale-95 shadow-xl shadow-emerald-100 uppercase tracking-wider"
+                        disabled={onboardMutation.isPending}
+                        className="flex-2 h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg transition-all active:scale-95 shadow-xl shadow-emerald-100 uppercase tracking-wider"
                       >
-                        {updateMeMutation.isPending ? (
+                        {onboardMutation.isPending ? (
                           <>
                             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                             Securing Data...

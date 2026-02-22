@@ -5,6 +5,7 @@ import {
   loginValidator,
   updateProfileValidator,
   refreshTokenValidator,
+  onboardUserValidator,
 } from "./user.validator";
 import { protect, restrictTo } from "../../middlewares/auth.middleware";
 import { validateRequest } from "../../middlewares/validate-request.middleware";
@@ -281,6 +282,58 @@ router.patch(
   updateProfileValidator,
   validateRequest,
   userController.updateMe.bind(userController),
+);
+
+/**
+ * @swagger
+ * /api/v1/users/onboard:
+ *   post:
+ *     summary: Complete user onboarding
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               age:
+ *                 type: integer
+ *               gender:
+ *                 type: string
+ *               height:
+ *                 type: number
+ *               weight:
+ *                 type: number
+ *               state:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *               healthConditions:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               familyHealthHistory:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: User onboarded successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ */
+router.post(
+  "/onboard",
+  onboardUserValidator,
+  validateRequest,
+  userController.onboard.bind(userController),
 );
 
 router.delete("/me", userController.deleteMe.bind(userController));

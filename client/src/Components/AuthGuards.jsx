@@ -21,7 +21,7 @@ export function ProtectedRoute({ children }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user.isFirstLogin && location.pathname !== "/onboarding") {
+  if (!user.isOnboarded && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -47,7 +47,7 @@ export function OnboardingRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!user.isFirstLogin) {
+  if (user.isOnboarded) {
     return <Navigate to="/dashboard" replace />;
   }
 

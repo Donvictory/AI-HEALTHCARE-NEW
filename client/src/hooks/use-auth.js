@@ -151,6 +151,19 @@ export const useLogout = () => {
   });
 };
 
+export const useOnboard = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data) => {
+      const response = await apiClient.post("/users/onboard", data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["me"]);
+    },
+  });
+};
+
 export const useDeleteAccount = () => {
   const queryClient = useQueryClient();
   return useMutation({

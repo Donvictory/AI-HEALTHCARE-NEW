@@ -47,6 +47,36 @@ export const updateProfileValidator = [
   body("isFirstLogin").optional().isBoolean(),
 ];
 
+export const onboardUserValidator = [
+  body("age").optional().isNumeric().withMessage("Age must be a number"),
+  body("gender")
+    .optional()
+    .isIn(Object.values(Gender))
+    .withMessage("Invalid gender"),
+  body("height").optional().isNumeric().withMessage("Height must be a number"),
+  body("weight").optional().isNumeric().withMessage("Weight must be a number"),
+  body("state").optional().isString().withMessage("State must be a string"),
+  body("city").optional().isString().withMessage("City must be a string"),
+  body("phoneNumber")
+    .optional()
+    .isString()
+    .withMessage("Phone number must be a string"),
+  body("healthConditions")
+    .optional()
+    .isArray()
+    .withMessage("Health conditions must be an array"),
+  body("healthConditions.*")
+    .isIn(Object.values(HealthCondition))
+    .withMessage("Invalid health condition"),
+  body("familyHealthHistory")
+    .optional()
+    .isArray()
+    .withMessage("Family health history must be an array"),
+  body("familyHealthHistory.*")
+    .isIn(Object.values(FamilyHealthHistory))
+    .withMessage("Invalid family health history"),
+];
+
 export const refreshTokenValidator = [
   body("refreshToken").notEmpty().withMessage("Refresh token is required"),
 ];
