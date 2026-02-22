@@ -33,22 +33,12 @@ export function Layout() {
     } else if (
       authenticated &&
       onboarded &&
-      (location.pathname === "/" || location.pathname === "/login")
+      (location.pathname === "/login" || location.pathname === "/signup")
     ) {
-      if (!todayCheckIn) {
-        navigate("/check-in");
-      } else {
-        navigate("/dashboard");
-      }
+      // Only redirect to dashboard if they are trying to access login/signup while already logged in
+      navigate("/dashboard");
     }
-  }, [
-    navigate,
-    location.pathname,
-    authenticated,
-    onboarded,
-    isPublicRoute,
-    todayCheckIn,
-  ]);
+  }, [navigate, location.pathname, authenticated, onboarded, isPublicRoute]);
 
   const showNav = authenticated && onboarded && !isPublicRoute;
 

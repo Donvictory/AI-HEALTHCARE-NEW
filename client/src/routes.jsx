@@ -10,13 +10,14 @@ import { DoctorFinder } from "./pages/DoctorFinder";
 import { HealthChat } from "./pages/HealthChat";
 import { NotFound } from "./pages/NotFound";
 import { Layout } from "./Components/Layout";
+import { LandingPage } from "./pages/LandingPage";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
     children: [
-      { index: true, element: <Login /> },
+      { index: true, element: <LandingPage /> },
       { path: "login", element: <Login /> },
       { path: "signup", element: <Signup /> },
       { path: "onboarding", element: <Onboarding /> },
