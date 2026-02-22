@@ -25,17 +25,23 @@ import {
   User,
   AlertTriangle,
   Home,
+  WifiOff,
 } from "lucide-react";
 import { toast } from "sonner";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
+import { useAskCompanion } from "../hooks/use-chat";
+import { useMe } from "../hooks/use-auth";
 
 export function HealthChat() {
   const navigate = useNavigate();
+  const { data: profile } = useMe();
+  const askCompanion = useAskCompanion();
   const [messages, setMessages] = useState(() => getChatMessages());
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
   const messagesEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -48,7 +54,7 @@ export function HealthChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const generateAIResponse = (userMessage) => {
+  const generateLocalAIResponse = (userMessage) => {
     const profile = getUserProfile();
     const todayData = getTodaysCheckIn();
     const lowerMessage = userMessage.toLowerCase();
@@ -148,7 +154,7 @@ export function HealthChat() {
     return `${profile?.name || "Friend"}, I'm here to help with health questions! I can discuss symptoms, provide context about common Nigerian health issues, remind you about healthy habits, and guide you to professional care when needed. What's on your mind today? 😊`;
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
     const userMessage = {
@@ -160,26 +166,40 @@ export function HealthChat() {
 
     setMessages((prev) => [...prev, userMessage]);
     saveChatMessage(userMessage);
+    const currentInput = input;
     setInput("");
     setIsTyping(true);
 
-    setTimeout(
-      () => {
-        const aiResponse = generateAIResponse(input);
+    let aiReply = "";
 
-        const assistantMessage = {
-          id: `msg-${Date.now()}-ai`,
-          role: "assistant",
-          content: aiResponse,
-          timestamp: new Date().toISOString(),
-        };
+    try {
+      // 1. Try backend AI (has full user context + check-in history)
+      aiReply = await askCompanion.mutateAsync(currentInput);
+      setIsOffline(false);
+    } catch (err) {
+      console.warn(
+        "Backend AI unavailable, using local fallback:",
+        err.message,
+      );
+      // 2. Fall back to local rule engine
+      aiReply = generateLocalAIResponse(currentInput);
+      setIsOffline(true);
+      toast.warning("Companion is offline — using local responses.", {
+        icon: "📡",
+        duration: 3000,
+      });
+    }
 
-        setMessages((prev) => [...prev, assistantMessage]);
-        saveChatMessage(assistantMessage);
-        setIsTyping(false);
-      },
-      1000 + Math.random() * 1000,
-    );
+    const assistantMessage = {
+      id: `msg-${Date.now()}-ai`,
+      role: "assistant",
+      content: aiReply,
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, assistantMessage]);
+    saveChatMessage(assistantMessage);
+    setIsTyping(false);
   };
 
   const startRecording = async () => {
@@ -231,10 +251,30 @@ export function HealthChat() {
               <Bot className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
-              <h1 className="font-bold text-gray-900">Health Companion</h1>
-              <p className="text-xs text-emerald-600 flex items-center gap-1">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                Online & Ready to Help
+              <h1 className="font-bold text-gray-900">
+                Companion
+                {profile?.name ? (
+                  <span className="font-normal text-gray-500 text-sm ml-1">
+                    — chatting with {profile.name.split(" ")[0]}
+                  </span>
+                ) : null}
+              </h1>
+              <p className="text-xs flex items-center gap-1">
+                {isOffline ? (
+                  <>
+                    <WifiOff className="w-3 h-3 text-amber-500" />
+                    <span className="text-amber-500 font-semibold">
+                      Offline Mode
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-emerald-600">
+                      Online & Ready to Help
+                    </span>
+                  </>
+                )}
               </p>
             </div>
           </div>
