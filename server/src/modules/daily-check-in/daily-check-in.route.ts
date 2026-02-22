@@ -16,7 +16,7 @@ const controller = new DailyCheckInController();
 router.post(
   "/",
   protect,
-  restrictToCheckInWindow,
+  // restrictToCheckInWindow,
   createDailyCheckInValidator,
   validateRequest,
   controller.create.bind(controller),
