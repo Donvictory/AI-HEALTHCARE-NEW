@@ -348,6 +348,45 @@ const swaggerSpec: OpenAPIV3.Document = {
         },
       },
     },
+    "/api/v1/users/onboard": {
+      post: {
+        tags: ["Users"],
+        summary: "Complete user onboarding",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  age: { type: "integer" },
+                  gender: { type: "string", enum: ["MALE", "FEMALE", "OTHER"] },
+                  height: { type: "number" },
+                  weight: { type: "number" },
+                  state: { type: "string" },
+                  city: { type: "string" },
+                  phoneNumber: { type: "string" },
+                  healthConditions: {
+                    type: "array",
+                    items: { type: "string" },
+                  },
+                  familyHealthHistory: {
+                    type: "array",
+                    items: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "User onboarded successfully" },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
 
     // ─── Dashboard ────────────────────────────────────────────────
     "/api/v1/dashboard": {
