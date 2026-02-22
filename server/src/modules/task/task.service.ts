@@ -40,27 +40,57 @@ export class TaskService {
       .filter((url) => !!url); // We just list the URLs indicating they submitted reports,
     // real ingestion of reading files could happen if integrated with Vision models.
 
-    // Provide context to AI
-    const profileContext = `Age: ${user.age || "Unknown"}, Gender: ${
-      user.gender || "Unknown"
-    }, Health Conditions: ${user.healthConditions?.join(", ") || "None"}`;
+    // Provide comprehensive context to AI
+    const bmi =
+      user.height && user.weight
+        ? (user.weight / Math.pow(user.height / 100, 2)).toFixed(1)
+        : "Unknown";
+
+    const profileContext = `
+      User Profile:
+      - Name: ${user.name}
+      - Age: ${user.age || "Unknown"}
+      - Gender: ${user.gender || "Unknown"}
+      - BMI: ${bmi} (${user.weight}kg, ${user.height}cm)
+      - Health Conditions: ${user.healthConditions?.length ? user.healthConditions.join(", ") : "None reported"}
+      - Family Health History: ${user.familyHealthHistory?.length ? user.familyHealthHistory.join(", ") : "None reported"}
+      - Current Health Points: ${user.healthPoints || 0}
+    `;
 
     const metricsText = recentCheckIns
       .map(
         (c: any) =>
-          `Date: ${new Date(c.createdAt || Date.now()).toLocaleDateString()}, Status: ${c.currentHealthStatus}, Symptoms: ${
-            c.symptomsToday?.join(", ") || "None"
-          }, Reports: ${c.medicalReports?.length || 0} attached`,
+          `Date: ${new Date(c.createdAt || Date.now()).toLocaleDateString()}
+           - Sleep: ${c.hoursSlept}h, Stress: ${c.stressLevel}/10, Mood: ${c.currentMood}/10
+           - Activity: ${c.dailyActivityMeasure} mins, Water: ${c.numOfWaterGlasses} glasses
+           - Health Status: ${c.currentHealthStatus}
+           - Symptoms: ${c.symptomsToday?.join(", ") || "None"}
+           - Lifestyle: ${c.lifestyleChecks?.join(", ") || "No flags"}
+           - Reports: ${c.medicalReports?.length || 0} attached`,
       )
-      .join("\n");
+      .join("\n\n");
 
-    const prompt = `Based on the following user profile and their recent daily check-in habits:
-Profile: ${profileContext}
-Recent check-ins:
-${metricsText || "No recent history"}
-Medical Reports Uploaded: ${medicalReports.length} recently.
-
-Generate exactly 3 simple, actionable health tasks the user should perform today. They should be clear and realistic.`;
+    const prompt = `
+      You are an Expert AI Health Coach. 
+      Analyze the following comprehensive user health data and history:
+      
+      ${profileContext}
+      
+      RECENT HISTORY (Last 5 Check-ins):
+      ${metricsText || "No recent history available."}
+      
+      UPLOADED MEDICAL REPORTS:
+      Total recent uploads: ${medicalReports.length}
+      
+      TASK GENERATION GOAL:
+      Based on this specific data, generate 3 highly personalized, intelligent, and context-driven daily health tasks. 
+      - If they haven't been sleeping well, suggest sleep hygiene.
+      - If they have specific health conditions, suggest relevant management tasks.
+      - If their lifestyle checks show skipped meals or no exercise, address that.
+      - If they are stressed, suggest mindfulness.
+      
+      Return 3 simple, actionable tasks with a title and a descriptive instruction.
+    `;
 
     const structure = {
       tasks: [
