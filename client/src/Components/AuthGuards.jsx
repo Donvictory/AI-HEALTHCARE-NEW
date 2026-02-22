@@ -17,16 +17,14 @@ export function ProtectedRoute({ children }) {
     );
   }
 
-  // Proactive check: if the 'logged_in' cookie is missing, we know for sure they aren't authenticated
-  const isLoggedIn = document.cookie.includes("logged_in=true");
-
-  if (!user && !isLoggedIn) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
   if (!user) {
-    // If we have the cookie but useMe hasn't finished or failed weirdly,
-    // it's safer to just return null/loader or redirect if it definitely failed
+    // Proactive check to see if we even have a session cookie
+    const hasSession = document.cookie.includes("logged_in=true");
+    if (!hasSession) {
+      return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+    // If we have a session cookie but no user yet (and not loading),
+    // it likely means the session is invalid or the API call failed.
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -37,14 +35,8 @@ export function ProtectedRoute({ children }) {
   return children;
 }
 
-/**
- * OnboardingRoute: Specifically for the onboarding flow.
- * Requires auth, but redirects to dashboard if already onboarded.
- */
 export function OnboardingRoute({ children }) {
   const { data: user, isLoading } = useMe();
-
-  console.log(user);
 
   if (isLoading) {
     return (
@@ -52,12 +44,6 @@ export function OnboardingRoute({ children }) {
         <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
       </div>
     );
-  }
-
-  const isLoggedIn = document.cookie.includes("logged_in=true");
-
-  if (!user && !isLoggedIn) {
-    return <Navigate to="/login" replace />;
   }
 
   if (!user) {
@@ -71,14 +57,10 @@ export function OnboardingRoute({ children }) {
   return children;
 }
 
-/**
- * GuestRoute: For Login/Signup pages.
- * Redirects authenticated users to dashboard.
- */
 export function GuestRoute({ children }) {
   const { data: user, isLoading } = useMe();
 
-  if (isLoading) return null; // No loader for guest routes for smoother feel
+  if (isLoading) return null;
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
