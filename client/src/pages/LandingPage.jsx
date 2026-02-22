@@ -53,7 +53,7 @@ export function LandingPage() {
               </span>
             </span>
           </div>
-          {user ? (
+          {/* {user ? (
             <>
               <div className="hidden sm:flex items-center gap-6">
                 <Button
@@ -89,7 +89,6 @@ export function LandingPage() {
                   Join DriftCare NG
                 </Button>
               </div>
-              {/* Mobile Auth Links */}
               <div className="flex sm:hidden items-center gap-4">
                 <button
                   onClick={() => navigate("/login")}
@@ -99,7 +98,22 @@ export function LandingPage() {
                 </button>
               </div>
             </>
-          )}
+          )} */}
+
+          <div className="hidden sm:flex items-center gap-6">
+            <button
+              onClick={() => navigate("/login")}
+              className="text-sm font-bold text-gray-600 hover:text-emerald-600 transition-colors"
+            >
+              Sign In
+            </button>
+            <Button
+              onClick={() => navigate("/signup")}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6 shadow-lg shadow-emerald-100"
+            >
+              Join DriftCare NG
+            </Button>
+          </div>
         </div>
       </nav>
 

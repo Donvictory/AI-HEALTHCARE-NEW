@@ -32,12 +32,6 @@ const setAuthCookies = (
     ...cookieOptions,
     maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
   });
-
-  res.cookie("logged_in", "true", {
-    ...cookieOptions,
-    httpOnly: false,
-    maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
-  });
 };
 
 export class UserController {
@@ -106,7 +100,6 @@ export class UserController {
       };
       res.clearCookie("refreshToken", cookieOptions);
       res.clearCookie("accessToken", cookieOptions);
-      res.clearCookie("logged_in", { ...cookieOptions, httpOnly: false });
       sendSuccess(res, null, "Logged out successfully", 200);
     },
   );

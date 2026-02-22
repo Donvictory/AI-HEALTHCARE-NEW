@@ -18,13 +18,6 @@ export function ProtectedRoute({ children }) {
   }
 
   if (!user) {
-    // Proactive check to see if we even have a session cookie
-    const hasSession = document.cookie.includes("logged_in=true");
-    if (!hasSession) {
-      return <Navigate to="/login" state={{ from: location }} replace />;
-    }
-    // If we have a session cookie but no user yet (and not loading),
-    // it likely means the session is invalid or the API call failed.
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

@@ -61,8 +61,8 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         isRefreshing = false;
         processQueue(refreshError);
-        // If refresh fails, we must redirect to login
-        window.location.href = "/login";
+        // If refresh fails, you might want to redirect to login
+        // window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
