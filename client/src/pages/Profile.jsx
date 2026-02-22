@@ -209,8 +209,8 @@ export function Profile() {
             <CardContent className="p-8 space-y-6">
               {[
                 { label: "Full Name", val: profile.name },
-                { label: "Phone", val: profile.phone || "Not provided" },
-                { label: "Biological Sex", val: profile.sex, cap: true },
+                { label: "Phone", val: profile.phoneNumber || "Not provided" },
+                { label: "Biological Sex", val: profile.gender, cap: true },
                 { label: "Height", val: `${profile.height} cm` },
                 { label: "Weight", val: `${profile.weight} kg` },
                 { label: "Location", val: `${profile.city}, ${profile.state}` },
@@ -243,9 +243,9 @@ export function Profile() {
                 <div className="text-xs font-black text-gray-400 uppercase tracking-widest">
                   Known Conditions
                 </div>
-                {profile.knownConditions?.length > 0 ? (
+                {profile.healthConditions?.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {profile.knownConditions.map((condition) => (
+                    {profile.healthConditions.map((condition) => (
                       <span
                         key={condition}
                         className="px-4 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-black border border-red-200 shadow-sm"
@@ -265,9 +265,9 @@ export function Profile() {
                 <div className="text-xs font-black text-gray-400 uppercase tracking-widest">
                   Genomic/Family History
                 </div>
-                {profile.familyHistory?.length > 0 ? (
+                {profile.familyHealthHistory?.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {profile.familyHistory.map((item) => (
+                    {profile.familyHealthHistory.map((item) => (
                       <span
                         key={item}
                         className="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-black border border-blue-200 shadow-sm"
