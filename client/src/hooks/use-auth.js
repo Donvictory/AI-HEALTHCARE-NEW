@@ -95,30 +95,24 @@ export const useMe = () => {
   return useQuery({
     queryKey: ["me"],
     queryFn: async () => {
-      const localProfile = getUserProfile();
-      const localAuth = getUserAuth();
-      const fallbackUser = localProfile || localAuth;
-
       try {
         const response = await apiClient.get("/users/me");
+
+        console.log(response.data);
         // Our API structure: { status: 'success', data: { user: ... } }
         const backendUser = response.data?.data?.user || response.data?.user;
 
         if (backendUser) {
-          // Merge with local if backend is missing some fields
-          return { ...(fallbackUser || {}), ...backendUser };
+          return backendUser;
         }
 
-        return fallbackUser;
+        return null;
       } catch (error) {
         if (error.response?.status === 401) {
           return null;
         }
-        console.warn(
-          "Backend profile fetch failed, using local fallback",
-          error,
-        );
-        return fallbackUser;
+        console.error("Backend profile fetch failed", error);
+        return null;
       }
     },
     retry: 1,
