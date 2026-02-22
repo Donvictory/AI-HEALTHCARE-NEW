@@ -1,10 +1,9 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.DEV
-    ? "/api/v1"
-    : import.meta.env.VITE_API_URL ||
-      "https://drift-care-backend.vercel.app/api/v1",
+  baseURL:
+    import.meta.env.VITE_API_URL ||
+    "https://drift-care-backend.vercel.app/api/v1",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
