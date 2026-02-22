@@ -50,6 +50,14 @@ const UserSchema = new Schema<IUser>(
     healthPoints: { type: Number, default: 0 },
     isFirstLogin: { type: Boolean, default: true },
     isOnboarded: { type: Boolean, default: false },
+    pushSubscription: {
+      endpoint: { type: String },
+      expirationTime: { type: Number },
+      keys: {
+        p256dh: { type: String },
+        auth: { type: String },
+      },
+    },
   },
   { timestamps: true },
 );

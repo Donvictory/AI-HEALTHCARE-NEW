@@ -61,6 +61,15 @@ export interface IUserEntity {
   isFirstLogin?: boolean; // true until first completed onboarding
   isOnboarded?: boolean;
 
+  pushSubscription?: {
+    endpoint: string;
+    keys: {
+      p256dh: string;
+      auth: string;
+    };
+    expirationTime?: number | null;
+  };
+
   createdAt?: Date;
   updatedAt?: Date;
 }

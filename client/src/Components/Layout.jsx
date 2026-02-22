@@ -2,6 +2,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useMe } from "../hooks/use-auth";
 import { isAuthenticated } from "../lib/storage";
+import { subscribeUserToPush } from "../lib/push-notifications";
 
 import { Heart, Home, User, Stethoscope, Bot, Loader2 } from "lucide-react";
 
@@ -11,6 +12,13 @@ export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: user, isLoading, isFetching } = useMe();
+
+  // Initialize push notifications for authenticated users
+  useEffect(() => {
+    if (user) {
+      subscribeUserToPush();
+    }
+  }, [user]);
 
   const isPublicRoute = ["/", "/login", "/signup"].some(
     (path) => location.pathname === path || location.pathname === path + "/",

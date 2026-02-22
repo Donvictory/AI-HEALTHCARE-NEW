@@ -3,6 +3,7 @@ import { UserService } from "./user.service";
 import { catchAsync } from "../../utils/catch-async.util";
 import { sendSuccess } from "../../utils/api-response.util";
 import { appConfig } from "../../config/app.config";
+import { sendPushNotification } from "../../utils/push-notifications.util";
 
 const userService = new UserService();
 
@@ -181,6 +182,24 @@ export class UserController {
         "User onboarded successfully",
         200,
       );
+
+      // Send welcome notification
+      sendPushNotification(updatedUser, {
+        title: "Welcome to DriftCare! 🚀",
+        body: "Your health profile is now active. We'll notify you of any health drift detected.",
+      });
+    },
+  );
+
+  subscribeNotifications = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { subscription } = req.body;
+
+      await userService.updateUserById(req.user.id, {
+        pushSubscription: subscription,
+      });
+
+      sendSuccess(res, null, "Notifications subscribed successfully", 200);
     },
   );
 

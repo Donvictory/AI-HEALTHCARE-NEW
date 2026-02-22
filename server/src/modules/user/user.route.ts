@@ -336,6 +336,11 @@ router.post(
   userController.onboard.bind(userController),
 );
 
+router.post(
+  "/subscribe-notifications",
+  userController.subscribeNotifications.bind(userController),
+);
+
 router.delete("/me", userController.deleteMe.bind(userController));
 
 // Restrict to admins and above
