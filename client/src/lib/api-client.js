@@ -1,114 +1,102 @@
 import axios from "axios";
-import {
-  getAccessToken,
-  getRefreshToken,
-  saveTokens,
-  clearTokens,
-} from "./storage";
+import { isAuthenticated, clearTokens } from "./storage";
 
 const apiClient = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_URL ||
-    "https://drift-care-backend.vercel.app/api/v1",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1",
+  withCredentials: true, // always send/receive cookies
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Request interceptor to add the access token to the header
+// Request interceptor – tokens live in httpOnly cookies so nothing extra needed.
 apiClient.interceptors.request.use(
-  (config) => {
-    const token = getAccessToken();
-    console.log(
-      `apiClient: Request to ${config.url} with token: ${token ? "exists" : "none"}`,
-    );
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
+  (config) => config,
   (error) => Promise.reject(error),
 );
 
 let isRefreshing = false;
 let failedQueue = [];
 
-const processQueue = (error, token = null) => {
+const processQueue = (error) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token);
+      prom.resolve();
     }
   });
   failedQueue = [];
 };
 
-// Response interceptor to handle errors (like 401)
+// Response interceptor – handles 401 by attempting a silent token refresh.
+//
+// Tokens are stored exclusively as httpOnly cookies, so:
+//   • we never read tokens from localStorage
+//   • we use the non-httpOnly `is_logged_in` hint cookie to decide if a
+//     session SHOULD exist before making a refresh request (saves a round-trip)
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Avoid infinite loop if refresh token fails
+    // Never try to refresh the refresh-token endpoint itself (infinite loop guard)
     if (
       originalRequest.url?.includes("/users/refresh-token") ||
       originalRequest._retry
     ) {
       if (originalRequest.url?.includes("/users/refresh-token")) {
+        // Refresh endpoint itself returned 401 → session is dead
         clearTokens();
-        // window.location.href = "/login";
+        window.location.replace("/login");
       }
       return Promise.reject(error);
     }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // If the hint cookie says there is no active session, skip the refresh
+      // attempt and redirect immediately — saves a round-trip to the server.
+      if (!isAuthenticated()) {
+        clearTokens();
+        window.location.replace("/login");
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
+        // Queue any other parallel requests until the refresh completes
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return apiClient(originalRequest);
-          })
+          .then(() => apiClient(originalRequest))
           .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = getRefreshToken();
-      if (!refreshToken) {
-        isRefreshing = false;
-        clearTokens();
-        return Promise.reject(error);
-      }
-
       try {
-        const response = await axios.post(
+        // The refreshToken httpOnly cookie is sent automatically by the browser
+        await axios.post(
           `${apiClient.defaults.baseURL}/users/refresh-token`,
-          {
-            refreshToken,
-          },
+          {},
+          { withCredentials: true },
         );
 
-        const { accessToken } = response.data.data || response.data;
-        saveTokens(accessToken);
-
         isRefreshing = false;
-        processQueue(null, accessToken);
+        processQueue(null);
 
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        // Retry the original request – the new accessToken cookie is now set
         return apiClient(originalRequest);
       } catch (refreshError) {
         isRefreshing = false;
-        processQueue(refreshError, null);
+        processQueue(refreshError);
         clearTokens();
-        // window.location.href = "/login";
+        window.location.replace("/login");
         return Promise.reject(refreshError);
       }
     }
+
     return Promise.reject(error);
   },
 );

@@ -50,9 +50,9 @@ export function Signup() {
         password: formData.password,
       },
       {
-        onSuccess: () => {
-          toast.success("Account created successfully! Please login. 🎉");
-          navigate("/login");
+        onSuccess: (data) => {
+          toast.success("Account created successfully! 🎉");
+          navigate("/onboarding");
         },
         onError: (error) => {
           toast.error(
