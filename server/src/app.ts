@@ -46,7 +46,17 @@ app.get("/", (_, res) => {
 });
 
 // Swagger UI (CDN-hosted — works on Vercel serverless)
-app.get("/api-docs", (_req: Request, res: Response) => {
+// Server URL is derived dynamically from the request so local Swagger
+// hits localhost and deployed Swagger hits the production URL automatically.
+app.get("/api-docs", (req: Request, res: Response) => {
+  const protocol =
+    (req.headers["x-forwarded-proto"] as string) || req.protocol || "http";
+  const host = req.headers.host || "localhost:8000";
+  const dynamicSpec = {
+    ...swaggerSpec,
+    servers: [{ url: `${protocol}://${host}`, description: "Current server" }],
+  };
+
   res.setHeader("Content-Type", "text/html");
   res.send(`<!DOCTYPE html>
 <html>
@@ -62,7 +72,7 @@ app.get("/api-docs", (_req: Request, res: Response) => {
     <script>
       window.onload = () => {
         SwaggerUIBundle({
-          spec: ${JSON.stringify(swaggerSpec)},
+          spec: ${JSON.stringify(dynamicSpec)},
           dom_id: '#swagger-ui',
           presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
           layout: 'BaseLayout',
