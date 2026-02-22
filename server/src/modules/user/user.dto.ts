@@ -57,6 +57,7 @@ export interface UserDto {
   familyHealthHistory?: FamilyHealthHistory[];
   hasCompletedDailyChecks?: boolean;
   currentDailyCheckStep?: number;
+  isFirstLogin?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

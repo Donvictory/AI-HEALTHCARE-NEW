@@ -45,6 +45,7 @@ const swaggerSpec: OpenAPIV3.Document = {
           familyHealthHistory: { type: "array", items: { type: "string" } },
           hasCompletedDailyChecks: { type: "boolean" },
           currentDailyCheckStep: { type: "integer" },
+          isFirstLogin: { type: "boolean" },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
         },

@@ -127,6 +127,10 @@ export class UserController {
         req.user.id,
         allowedUpdates,
       );
+      console.log(
+        "UserController.updateMe - User after update:",
+        JSON.stringify(updatedUser, null, 2),
+      );
       sendSuccess(
         res,
         { user: updatedUser },
