@@ -820,12 +820,15 @@ export function Dashboard() {
             </div>
             <div className="bg-white p-6 rounded-3xl shadow-sm text-center ring-1 ring-gray-100">
               <div className="text-3xl font-black text-blue-600">
-                {profile.bmi}
+                {profile.bmi || "0.0"}
               </div>
-              <div className="text-[10px] font-black text-blue-400 uppercase tracking-tight -mt-1 mb-1">
+              <div className="text-[10px] font-black text-blue-400 uppercase tracking-tight -mt-1">
                 {profile.bmiCategory || "Calculating..."}
               </div>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+              <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1 border-t border-gray-50 pt-1">
+                {profile.weight}kg / {profile.height}cm
+              </div>
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">
                 Body Index
               </div>
             </div>

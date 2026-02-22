@@ -17,11 +17,11 @@ export function ProtectedRoute({ children }) {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+  // if (!user) {
+  //   return <Navigate to="/login" state={{ from: location }} replace />;
+  // }
 
-  if (!user.isOnboarded && location.pathname !== "/onboarding") {
+  if (!user?.isOnboarded && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -41,11 +41,11 @@ export function OnboardingRoute({ children }) {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  // if (!user) {
+  //   return <Navigate to="/login" replace />;
+  // }
 
-  if (user.isOnboarded) {
+  if (user?.isOnboarded) {
     return <Navigate to="/dashboard" replace />;
   }
 
