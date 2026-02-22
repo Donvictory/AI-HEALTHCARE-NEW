@@ -94,15 +94,21 @@ export const useMe = () => {
     queryKey: ["me"],
     queryFn: async () => {
       try {
-        const response = await apiClient.get("/users/me");
-
-        // Our API structure: { status: 'success', data: { user: ... } }
-        const backendUser = response.data?.data?.user || response.data?.user;
+        // Fetch Enriched Profile which includes stats (BMI, points, etc.)
+        const response = await apiClient.get("/users/profile");
+        const data = response.data?.data;
+        const backendUser = data?.user;
+        const stats = data?.stats;
 
         if (backendUser) {
+          // Merge stats into user object for dashboard convenience
+          const enrichedUser = {
+            ...backendUser,
+            ...stats,
+          };
           // Keep localStorage in sync with backend
-          saveUserAuth(backendUser);
-          return backendUser;
+          saveUserAuth(enrichedUser);
+          return enrichedUser;
         }
 
         // Backend returned no user — try localStorage fallback

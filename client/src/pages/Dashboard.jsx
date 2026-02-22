@@ -315,7 +315,7 @@ export function Dashboard() {
             <div className="bg-yellow-50 px-6 py-2 rounded-2xl border border-yellow-100 flex items-center gap-2">
               <Award className="w-5 h-5 text-yellow-500" />
               <span className="text-lg font-black text-yellow-700">
-                {points} Points
+                {profile?.healthPoints ?? points} Points
               </span>
             </div>
           </div>
@@ -811,7 +811,7 @@ export function Dashboard() {
           <CardContent className="grid grid-cols-2 lg:grid-cols-4 gap-6 p-8 bg-gray-50/50">
             <div className="bg-white p-6 rounded-3xl shadow-sm text-center ring-1 ring-gray-100">
               <div className="text-3xl font-black text-emerald-600">
-                {checkIns.length}
+                {profile?.totalCheckIns ?? checkIns.length}
               </div>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
                 Records
@@ -821,7 +821,10 @@ export function Dashboard() {
               <div className="text-3xl font-black text-blue-600">
                 {profile.bmi}
               </div>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
+              <div className="text-[10px] font-black text-blue-400 uppercase tracking-tight -mt-1 mb-1">
+                {profile.bmiCategory || "Calculating..."}
+              </div>
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                 Body Index
               </div>
             </div>
