@@ -10,12 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "../Components/ui/card";
-import { getUserAuth, hasCompletedOnboarding } from "../lib/storage";
-import { Heart, Sparkles } from "lucide-react";
+import { useLogin } from "../hooks/use-auth";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export function Login() {
   const navigate = useNavigate();
+  const loginMutation = useLogin();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -23,33 +24,23 @@ export function Login() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    console.log("Login attempt with:", formData.email);
-
-    const auth = getUserAuth();
-
-    if (!auth) {
-      toast.error("No account found. Please sign up first.");
-      return;
-    }
-
-    if (auth.email !== formData.email) {
-      toast.error("Invalid email address");
-      return;
-    }
-
-    if (auth.password !== formData.password) {
-      toast.error("Invalid password");
-      return;
-    }
-
-    toast.success(`Welcome back, ${auth.name}! 🎉`);
-
-    // Check if user has completed onboarding
-    if (hasCompletedOnboarding()) {
-      navigate("/dashboard");
-    } else {
-      navigate("/onboarding");
-    }
+    loginMutation.mutate(formData, {
+      onSuccess: (data) => {
+        toast.success(`Welcome back! 🎉`);
+        // The token is handled in the hook's onSuccess
+        if (data.data.user.age) {
+          navigate("/dashboard");
+        } else {
+          navigate("/onboarding");
+        }
+      },
+      onError: (error) => {
+        toast.error(
+          error.response?.data?.message ||
+            "Login failed. Please check your credentials.",
+        );
+      },
+    });
   };
 
   return (

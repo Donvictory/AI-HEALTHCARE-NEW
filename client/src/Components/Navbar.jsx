@@ -18,12 +18,8 @@ export function Navbar() {
             className="flex items-center gap-2.5 cursor-pointer group"
           >
             <div className="relative">
-              <div className="bg-emerald-600 p-1.5 rounded-2xl shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
-                <img
-                  src="/logo.svg"
-                  alt="DriftCare Logo"
-                  className="w-6 h-6 invert brightness-0"
-                />
+              <div className="bg-emerald-600 p-2 rounded-2xl shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform duration-300">
+                <Activity className="w-5 h-5 text-white" />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border-2 border-white animate-pulse" />
             </div>

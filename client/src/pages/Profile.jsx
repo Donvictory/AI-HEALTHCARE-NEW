@@ -47,17 +47,18 @@ import {
 } from "../Components/ui/alert-dialog";
 import { motion } from "framer-motion";
 
+import { useMe, useLogout } from "../hooks/use-auth";
+
 export function Profile() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
+  const { data: profile, isLoading: isProfileLoading } = useMe();
+  const logoutMutation = useLogout();
   const [totalCheckIns, setTotalCheckIns] = useState(0);
   const [points, setPoints] = useState(0);
 
   useEffect(() => {
-    const userProfile = getUserProfile();
     const checkIns = getDailyCheckIns();
     const userPoints = getPoints();
-    setProfile(userProfile);
     setTotalCheckIns(checkIns.length);
     setPoints(userPoints);
   }, []);
@@ -71,14 +72,15 @@ export function Profile() {
   };
 
   const handleLogout = () => {
-    logout();
-    toast.success("Logged out successfully");
-    setTimeout(() => {
-      window.location.href = "/login";
-    }, 1000);
+    logoutMutation.mutate(null, {
+      onSuccess: () => {
+        toast.success("Logged out successfully");
+        navigate("/login");
+      },
+    });
   };
 
-  if (!profile) {
+  if (isProfileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-4">
@@ -89,6 +91,11 @@ export function Profile() {
         </div>
       </div>
     );
+  }
+
+  if (!profile) {
+    navigate("/login");
+    return null;
   }
 
   const joinDate = new Date(profile.createdAt).toLocaleDateString("en-US", {

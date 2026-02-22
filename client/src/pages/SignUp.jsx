@@ -10,12 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "../Components/ui/card";
-import { saveUserAuth, getUserAuth } from "../lib/storage";
-import { Heart, Sparkles } from "lucide-react";
+import { useRegister } from "../hooks/use-auth";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export function Signup() {
   const navigate = useNavigate();
+  const registerMutation = useRegister();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -32,8 +33,8 @@ export function Signup() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (formData.password.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -42,23 +43,25 @@ export function Signup() {
       return;
     }
 
-    // Check if user already exists
-    const existingAuth = getUserAuth();
-    if (existingAuth && existingAuth.email === formData.email) {
-      toast.error("Account already exists. Please login.");
-      return;
-    }
-
-    const auth = {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password, // In production, this would be hashed
-      createdAt: new Date().toISOString(),
-    };
-
-    saveUserAuth(auth);
-    toast.success("Account created successfully! 🎉");
-    navigate("/onboarding");
+    registerMutation.mutate(
+      {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Account created successfully! Please login. 🎉");
+          navigate("/login");
+        },
+        onError: (error) => {
+          toast.error(
+            error.response?.data?.message ||
+              "Registration failed. Please try again.",
+          );
+        },
+      },
+    );
   };
 
   return (

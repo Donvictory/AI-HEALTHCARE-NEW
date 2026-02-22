@@ -54,9 +54,11 @@ import {
   Radar,
 } from "recharts";
 
+import { useMe } from "../hooks/use-auth";
+
 export function Dashboard() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
+  const { data: profile, isLoading: isProfileLoading } = useMe();
   const [checkIns, setCheckIns] = useState([]);
   const [todayCheckIn, setTodayCheckIn] = useState(null);
   const [driftResult, setDriftResult] = useState(null);
@@ -64,20 +66,18 @@ export function Dashboard() {
   const [healthTasks, setHealthTasks] = useState([]);
 
   useEffect(() => {
-    const userProfile = getUserProfile();
     const last7Days = getCheckInsLast7Days();
     const today = getTodaysCheckIn();
     const userPoints = getPoints();
     const tasks = getHealthTasks();
 
-    setProfile(userProfile);
     setCheckIns(last7Days);
     setTodayCheckIn(today);
     setPoints(userPoints);
     setHealthTasks(tasks);
 
     if (last7Days.length > 0) {
-      const result = detectDrift(last7Days, userProfile);
+      const result = detectDrift(last7Days, profile);
       setDriftResult(result);
     } else {
       setDriftResult({
@@ -87,7 +87,27 @@ export function Dashboard() {
         insights: [],
       });
     }
-  }, []);
+  }, [profile]);
+
+  if (isProfileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-emerald-900 font-bold animate-pulse">
+            Loading Dashboard...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    // Falls back to local storage if not logged in to backend, or stays loading
+    // For now, if no profile from backend, we might want to redirect to login
+    // navigate("/login");
+    // return null;
+  }
 
   const handleCheckIn = () => {
     if (todayCheckIn) {
