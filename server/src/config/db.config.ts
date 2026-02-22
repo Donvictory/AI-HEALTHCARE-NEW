@@ -26,7 +26,10 @@ const connectToDatabase = async () => {
       isConnected = true;
       console.log("Connected to MongoDB");
     } catch (error) {
-      console.error("MongoDB Connection Error (Will retry if needed):", error.message);
+      console.error(
+        "MongoDB Connection Error (Will retry if needed):",
+        (error as Error).message,
+      );
     }
   })();
 

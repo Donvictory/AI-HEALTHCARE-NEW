@@ -8,7 +8,7 @@ const db_config_1 = __importDefault(require("../config/db.config"));
 const crud_util_1 = require("../utils/crud.util");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_model_1 = __importDefault(require("../modules/user/user.model"));
-const users_seeder_1 = require("../scripts/seeding/users.seeder");
+const users_seeder_1 = require("./seeding/users.seeder");
 const seedData = async () => {
     try {
         await (0, db_config_1.default)();

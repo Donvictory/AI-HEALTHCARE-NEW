@@ -5,16 +5,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OpenRouterProvider = void 0;
 const openai_1 = __importDefault(require("openai"));
-const app_config_1 = __importDefault(require("../../../config/app.config"));
+const app_config_1 = require("../../../config/app.config");
 const app_error_util_1 = require("../../../utils/app-error.util");
 class OpenRouterProvider {
     openai;
     constructor() {
-        if (!app_config_1.default.ai.openRouteApiKey)
+        if (!app_config_1.appConfig.ai.openRouteApiKey)
             throw new app_error_util_1.AppError("OpenRouter API key is not configured", 500);
         this.openai = new openai_1.default({
             baseURL: "https://openrouter.ai/api/v1",
-            apiKey: app_config_1.default.ai.openRouteApiKey,
+            apiKey: app_config_1.appConfig.ai.openRouteApiKey,
         });
     }
     async normalize(input, structure) {
@@ -38,6 +38,22 @@ class OpenRouterProvider {
         catch (error) {
             console.error("OpenRouter Error:", error);
             throw new app_error_util_1.AppError(`AI Processing failed: ${error.message}`, error.status || 500);
+        }
+    }
+    async chat(messages) {
+        try {
+            const response = await this.openai.chat.completions.create({
+                model: "google/gemini-2.5-flash",
+                messages,
+            });
+            const result = response.choices[0].message.content;
+            if (!result)
+                throw new app_error_util_1.AppError("Failed to get response from OpenRouter", 500);
+            return result;
+        }
+        catch (error) {
+            console.error("OpenRouter Chat Error:", error);
+            throw new app_error_util_1.AppError(`AI Chat failed: ${error.message}`, error.status || 500);
         }
     }
 }

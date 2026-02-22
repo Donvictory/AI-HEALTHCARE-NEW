@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AIService = void 0;
-const openrouter_provider_1 = require("../../modules/ai/providers/openrouter.provider");
+const openrouter_provider_1 = require("./providers/openrouter.provider");
 const app_error_util_1 = require("../../utils/app-error.util");
 class AIService {
     providers = new Map();
@@ -19,6 +19,12 @@ class AIService {
         const result = await provider.normalize(input, structure);
         this.cache.set(cacheKey, result);
         return result;
+    }
+    async chat(messages, providerName = "openrouter") {
+        const provider = this.providers.get(providerName);
+        if (!provider)
+            throw new app_error_util_1.AppError(`AI Provider not found`, 404);
+        return provider.chat(messages);
     }
 }
 exports.AIService = AIService;

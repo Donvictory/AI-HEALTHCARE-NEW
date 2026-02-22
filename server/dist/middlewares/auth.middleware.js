@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.restrictTo = exports.protect = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const app_error_util_1 = require("../utils/app-error.util");
-const app_config_1 = __importDefault(require("../config/app.config"));
+const app_config_1 = require("../config/app.config");
 const user_model_1 = __importDefault(require("../modules/user/user.model"));
 const protect = async (req, res, next) => {
     try {
@@ -15,10 +15,13 @@ const protect = async (req, res, next) => {
             req.headers.authorization.startsWith("Bearer")) {
             token = req.headers.authorization.split(" ")[1];
         }
+        else if (req.cookies?.accessToken) {
+            token = req.cookies.accessToken;
+        }
         if (!token) {
             return next(new app_error_util_1.AppError("You are not logged in! Please log in to get access.", 401));
         }
-        const decoded = jsonwebtoken_1.default.verify(token, app_config_1.default.jwt.accessSecret);
+        const decoded = jsonwebtoken_1.default.verify(token, app_config_1.appConfig.jwt.accessSecret);
         const currentUser = await user_model_1.default.findById(decoded.id);
         if (!currentUser) {
             return next(new app_error_util_1.AppError("The user belonging to this token does no longer exist.", 401));

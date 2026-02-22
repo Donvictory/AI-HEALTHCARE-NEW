@@ -4,20 +4,38 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
-const app_config_1 = __importDefault(require("../config/app.config"));
+const app_config_1 = require("./app.config");
+// Disable buffering so commands fail fast if DB is down
+mongoose_1.default.set("bufferCommands", false);
+let isConnected = false;
 const connectToDatabase = async () => {
-    try {
-        const options = {};
-        if (app_config_1.default.db.username && app_config_1.default.db.password) {
-            options.user = app_config_1.default.db.username;
-            options.pass = app_config_1.default.db.password;
-        }
-        await mongoose_1.default.connect(app_config_1.default.db.url, options);
-        console.log("Connected to MongoDB");
+    if (isConnected || mongoose_1.default.connection.readyState === 1) {
+        return;
     }
-    catch (error) {
-        console.error("MongoDB Connection Error:", error);
-        process.exit(1);
+    const connectionPromise = (async () => {
+        try {
+            const options = {
+                serverSelectionTimeoutMS: 2000, // 2 seconds
+                connectTimeoutMS: 5000,
+            };
+            if (app_config_1.appConfig.db.username && app_config_1.appConfig.db.password) {
+                options.user = app_config_1.appConfig.db.username;
+                options.pass = app_config_1.appConfig.db.password;
+            }
+            await mongoose_1.default.connect(app_config_1.appConfig.db.url, options);
+            isConnected = true;
+            console.log("Connected to MongoDB");
+        }
+        catch (error) {
+            console.error("MongoDB Connection Error (Will retry if needed):", error.message);
+        }
+    })();
+    // Do not await so the server can start listening even if DB is down
+    if (process.env.NODE_ENV === "development") {
+        console.warn("Starting server without waiting for MongoDB connection...");
+    }
+    else {
+        await connectionPromise;
     }
 };
 exports.default = connectToDatabase;

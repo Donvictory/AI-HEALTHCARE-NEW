@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const user_route_1 = __importDefault(require("../modules/user/user.route"));
+const media_route_1 = __importDefault(require("../modules/media/media.route"));
+const daily_check_in_route_1 = __importDefault(require("../modules/daily-check-in/daily-check-in.route"));
+const doctor_route_1 = __importDefault(require("../modules/doctor/doctor.route"));
+const dashboard_route_1 = __importDefault(require("../modules/dashboard/dashboard.route"));
+const cron_route_1 = __importDefault(require("../modules/cron/cron.route"));
+const chat_route_1 = __importDefault(require("../modules/chat/chat.route"));
+const router = express_1.default.Router();
+router.use("/users", user_route_1.default);
+router.use("/media", media_route_1.default);
+router.use("/daily-check-ins", daily_check_in_route_1.default);
+router.use("/doctors", doctor_route_1.default);
+router.use("/dashboard", dashboard_route_1.default);
+router.use("/cron", cron_route_1.default);
+router.use("/chat", chat_route_1.default);
+exports.default = router;

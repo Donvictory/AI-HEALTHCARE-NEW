@@ -37,7 +37,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const user_entity_1 = require("../../modules/user/user.entity");
+const user_entity_1 = require("./user.entity");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const UserSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
@@ -49,13 +49,40 @@ const UserSchema = new mongoose_1.Schema({
         default: user_entity_1.UserRole.USER,
     },
     isActive: { type: Boolean, default: true },
+    // Onboarding fields
+    age: { type: Number },
+    gender: {
+        type: String,
+        enum: Object.values(user_entity_1.Gender),
+    },
+    height: { type: Number }, // cm
+    weight: { type: Number }, // kg
+    state: { type: String },
+    city: { type: String },
+    phoneNumber: { type: String },
+    healthConditions: [
+        {
+            type: String,
+            enum: Object.values(user_entity_1.HealthCondition),
+        },
+    ],
+    familyHealthHistory: [
+        {
+            type: String,
+            enum: Object.values(user_entity_1.FamilyHealthHistory),
+        },
+    ],
+    hasCompletedDailyChecks: { type: Boolean, default: false },
+    currentDailyCheckStep: { type: Number, default: 1 },
+    healthPoints: { type: Number, default: 0 },
+    isFirstLogin: { type: Boolean, default: true },
+    isOnboarded: { type: Boolean, default: false },
 }, { timestamps: true });
 // Hash password before saving
-UserSchema.pre("save", async function (next) {
+UserSchema.pre("save", async function () {
     if (!this.isModified("password"))
-        return next();
+        return;
     this.password = await bcrypt_1.default.hash(this.password, 12);
-    next();
 });
 // Instance method to check password
 UserSchema.methods.correctPassword = async function (candidatePassword) {
