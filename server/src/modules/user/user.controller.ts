@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { UserService } from "./user.service";
 import { catchAsync } from "../../utils/catch-async.util";
 import { sendSuccess } from "../../utils/api-response.util";
+import { appConfig } from "../../config/app.config";
 
 const userService = new UserService();
 
