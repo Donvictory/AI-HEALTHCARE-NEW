@@ -212,6 +212,22 @@ router.get("/me", userController.getMe.bind(userController));
 
 /**
  * @swagger
+ * /api/v1/users/profile:
+ *   get:
+ *     summary: Get current authenticated user profile with stats (BMI, check-ins, etc.)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Enriched user profile
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/profile", userController.getProfile.bind(userController));
+
+/**
+ * @swagger
  * /api/v1/users/me:
  *   patch:
  *     summary: Update current authenticated user profile (Onboarding details)

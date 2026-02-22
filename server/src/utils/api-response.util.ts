@@ -22,3 +22,14 @@ export const sendSuccess = (
     .status(statusCode)
     .json(new ApiResponse(statusCode, data, message));
 };
+
+export const sendError = (
+  res: Response,
+  message: string,
+  statusCode = 500,
+  data: any = null,
+) => {
+  return res
+    .status(statusCode)
+    .json(new ApiResponse(statusCode, data, message));
+};

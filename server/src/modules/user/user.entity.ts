@@ -53,6 +53,8 @@ export interface IUserEntity {
   familyHealthHistory?: FamilyHealthHistory[];
   hasCompletedDailyChecks?: boolean;
   currentDailyCheckStep?: number;
+  healthPoints?: number; // accumulated from check-ins
+  isFirstLogin?: boolean; // true until first completed onboarding
 
   createdAt?: Date;
   updatedAt?: Date;
