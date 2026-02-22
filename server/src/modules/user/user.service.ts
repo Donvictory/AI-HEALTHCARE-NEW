@@ -58,7 +58,9 @@ export class UserService {
     const user = await UserModel.findOne({ email: data.email }).select(
       "+password",
     );
-    if (!user || !(await (user as any).correctPassword(data.password))) {
+    if (!user) throw new AppError("User not found", 404);
+
+    if (!(await (user as any).correctPassword(data.password))) {
       throw new AppError("Incorrect email or password", 401);
     }
 
