@@ -1,7 +1,6 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useMe } from "../hooks/use-auth";
-import { isAuthenticated as checkToken } from "../lib/storage";
 
 import { Heart, Home, User, Stethoscope, Bot, Loader2 } from "lucide-react";
 
@@ -10,29 +9,9 @@ import { Navbar } from "./Navbar";
 export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: user, isLoading, isError } = useMe();
+  const { data: user, isLoading } = useMe();
 
   const isPublicRoute = ["/", "/login", "/signup"].includes(location.pathname);
-
-  useEffect(() => {
-    if (isLoading) return;
-
-    if (!user && !isPublicRoute) {
-      navigate("/login");
-    } else if (user) {
-      // Use isFirstLogin from backend to redirect to onboarding
-      if (user.isFirstLogin && location.pathname !== "/onboarding") {
-        navigate("/onboarding");
-      }
-      // If they are on login/signup but already logged in and finished onboarding
-      else if (
-        !user.isFirstLogin &&
-        (location.pathname === "/login" || location.pathname === "/signup")
-      ) {
-        navigate("/dashboard");
-      }
-    }
-  }, [navigate, location.pathname, user, isLoading, isPublicRoute]);
 
   if (isLoading && !isPublicRoute) {
     return (
@@ -44,6 +23,7 @@ export function Layout() {
 
   const authenticated = !!user;
   const onboarded = user ? !user.isFirstLogin : false;
+  // Navigation only shows for logged-in users who finished onboarding and aren't on the landing page
   const showNav = authenticated && onboarded && !isPublicRoute;
 
   return (

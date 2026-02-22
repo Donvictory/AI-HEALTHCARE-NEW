@@ -11,6 +11,11 @@ import { HealthChat } from "./pages/HealthChat";
 import { NotFound } from "./pages/NotFound";
 import { Layout } from "./Components/Layout";
 import { LandingPage } from "./pages/LandingPage";
+import {
+  ProtectedRoute,
+  GuestRoute,
+  OnboardingRoute,
+} from "./Components/AuthGuards";
 
 export const router = createBrowserRouter([
   {
@@ -18,15 +23,78 @@ export const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { index: true, element: <LandingPage /> },
-      { path: "login", element: <Login /> },
-      { path: "signup", element: <Signup /> },
-      { path: "onboarding", element: <Onboarding /> },
-      { path: "dashboard", element: <Dashboard /> },
-      { path: "check-in", element: <DailyCheckIn /> },
-      { path: "profile", element: <Profile /> },
-      { path: "edit-profile", element: <EditProfile /> },
-      { path: "find-doctor", element: <DoctorFinder /> },
-      { path: "health-chat", element: <HealthChat /> },
+      {
+        path: "login",
+        element: (
+          <GuestRoute>
+            <Login />
+          </GuestRoute>
+        ),
+      },
+      {
+        path: "signup",
+        element: (
+          <GuestRoute>
+            <Signup />
+          </GuestRoute>
+        ),
+      },
+      {
+        path: "onboarding",
+        element: (
+          <OnboardingRoute>
+            <Onboarding />
+          </OnboardingRoute>
+        ),
+      },
+      {
+        path: "dashboard",
+        element: (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "check-in",
+        element: (
+          <ProtectedRoute>
+            <DailyCheckIn />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "profile",
+        element: (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "edit-profile",
+        element: (
+          <ProtectedRoute>
+            <EditProfile />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "find-doctor",
+        element: (
+          <ProtectedRoute>
+            <DoctorFinder />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "health-chat",
+        element: (
+          <ProtectedRoute>
+            <HealthChat />
+          </ProtectedRoute>
+        ),
+      },
       { path: "*", element: <NotFound /> },
     ],
   },
