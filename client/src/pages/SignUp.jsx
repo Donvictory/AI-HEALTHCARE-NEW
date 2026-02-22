@@ -67,7 +67,7 @@ export function Signup() {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="relative">
-              <Heart className="w-16 h-16 text-emerald-600 fill-emerald-600" />
+              <img src="/logo.svg" alt="DriftCare Logo" className="w-24 h-24" />
               <Sparkles className="w-6 h-6 text-yellow-500 absolute -top-1 -right-1" />
             </div>
           </div>

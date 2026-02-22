@@ -35,6 +35,7 @@ import {
   Activity,
   Upload,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 // eslint-disable-next-line no-unused-vars
@@ -80,6 +81,7 @@ export function DailyCheckIn() {
     reportNotes: "",
   });
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Check if already completed today
@@ -109,6 +111,10 @@ export function DailyCheckIn() {
 
   const handleComplete = async () => {
     const today = new Date().toISOString().split("T")[0];
+    setIsSubmitting(true);
+
+    // Artificial delay to simulate AI/Pattern analysis
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Calculate basic resilience score (will be recalculated with drift detection)
     const resilienceScore = calculateQuickScore(checkInData);
@@ -150,6 +156,7 @@ export function DailyCheckIn() {
     // Award 15 points for completing check-in
     addPoints(15);
 
+    setIsSubmitting(false);
     toast.success("Check-in complete! You earned 15 points! 🎉");
     navigate("/dashboard");
   };
@@ -628,13 +635,25 @@ export function DailyCheckIn() {
                   </Button>
                   <Button
                     onClick={handleComplete}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-6 rounded-2xl shadow-xl shadow-emerald-200 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg uppercase tracking-widest relative overflow-hidden group"
+                    disabled={isSubmitting}
+                    className="flex-1 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-black py-8 rounded-[2rem] shadow-2xl shadow-emerald-100 transition-all hover:scale-[1.03] active:scale-[0.97] text-xl uppercase tracking-[0.15em] relative overflow-hidden group border-none disabled:opacity-80"
                   >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      Complete Check-In{" "}
-                      <Sparkles className="w-5 h-5 fill-white" />
+                    <span className="relative z-10 flex items-center justify-center gap-3">
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-6 h-6 animate-spin" />
+                          Analyzing Patterns...
+                        </>
+                      ) : (
+                        <>
+                          Secure Finish
+                          <Sparkles className="w-6 h-6 fill-white" />
+                        </>
+                      )}
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                    {!isSubmitting && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
+                    )}
                   </Button>
                 </div>
               </div>
