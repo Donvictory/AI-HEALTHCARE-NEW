@@ -12,10 +12,13 @@ export const useRegister = () => {
         const response = await apiClient.post("/users/register", userData);
         return response.data;
       } catch (error) {
-        // Fallback for Demo/Dev mode if backend is unreachable
-        if (!error.response) {
+        // Fallback for Demo/Dev mode if backend is unreachable or failing
+        const isNetworkError = !error.response;
+        const isServerError = error.response?.status >= 500;
+
+        if (isNetworkError || isServerError) {
           console.warn(
-            "Backend unreachable, using local storage fallback for registration.",
+            `Backend ${isNetworkError ? "unreachable" : "failing"}, using local storage fallback for registration.`,
           );
           return {
             status: "success",
@@ -46,10 +49,13 @@ export const useLogin = () => {
         const response = await apiClient.post("/users/login", credentials);
         return response.data;
       } catch (error) {
-        // Fallback for Demo/Dev mode if backend is unreachable
-        if (!error.response) {
+        // Fallback for Demo/Dev mode if backend is unreachable or failing
+        const isNetworkError = !error.response;
+        const isServerError = error.response?.status >= 500;
+
+        if (isNetworkError || isServerError) {
           console.warn(
-            "Backend unreachable, using local storage fallback for login.",
+            `Backend ${isNetworkError ? "unreachable" : "failing"}, using local storage fallback for login.`,
           );
           const localProfile = getUserProfile();
           if (localProfile && localProfile.email === credentials.email) {
@@ -62,7 +68,11 @@ export const useLogin = () => {
           return {
             status: "success",
             data: {
-              user: { email: credentials.email, name: "Demo User" },
+              user: {
+                email: credentials.email,
+                name: "Demo User",
+                isFirstLogin: true,
+              },
               accessToken: "demo-token",
             },
           };
@@ -86,24 +96,29 @@ export const useMe = () => {
     queryKey: ["me"],
     queryFn: async () => {
       const localProfile = getUserProfile();
+      const localAuth = getUserAuth();
+      const fallbackUser = localProfile || localAuth;
 
       try {
         const response = await apiClient.get("/users/me");
-        const backendUser = response.data.data.user;
+        // Our API structure: { status: 'success', data: { user: ... } }
+        const backendUser = response.data?.data?.user || response.data?.user;
 
-        // Merge or prefer backend data if it's more complete
-        if (backendUser && backendUser.age) {
-          return backendUser;
+        if (backendUser) {
+          // Merge with local if backend is missing some fields
+          return { ...(fallbackUser || {}), ...backendUser };
         }
 
-        return localProfile || backendUser;
+        return fallbackUser;
       } catch (error) {
-        console.error("Backend profile fetch failed:", error);
-        // Fallback to local profile on network error (might be unauthorized or just offline)
         if (error.response?.status === 401) {
           return null;
         }
-        return localProfile;
+        console.warn(
+          "Backend profile fetch failed, using local fallback",
+          error,
+        );
+        return fallbackUser;
       }
     },
     retry: 1,
