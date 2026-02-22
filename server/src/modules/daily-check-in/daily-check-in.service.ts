@@ -24,12 +24,10 @@ export class DailyCheckInService {
     // Calculate resilience score for this check-in
     const { resilience } = calculateResilience(checkIn as any);
 
-    // Update user: award points, mark check-in done, and track onboarding status
+    // Update user: award points, mark check-in done
     await UserModel.findByIdAndUpdate(userId, {
       $inc: { healthPoints: resilience },
       hasCompletedDailyChecks: true,
-      isOnboarded: true,
-      isFirstLogin: false, // Completing a daily check-in counts as being "onboarded" or active
     });
 
     return checkIn;
