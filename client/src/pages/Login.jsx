@@ -30,9 +30,8 @@ export function Login() {
         // Use isOnboarded flag for routing
         const user = data.data?.user || data.user;
 
-        console.log(user);
-
         if (!user?.isOnboarded) {
+          console.log("is not onboarded");
           navigate("/onboarding");
         } else {
           navigate("/dashboard");

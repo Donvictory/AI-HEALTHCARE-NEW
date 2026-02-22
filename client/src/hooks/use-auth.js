@@ -98,7 +98,6 @@ export const useMe = () => {
       try {
         const response = await apiClient.get("/users/me");
 
-        console.log(response.data);
         // Our API structure: { status: 'success', data: { user: ... } }
         const backendUser = response.data?.data?.user || response.data?.user;
 
