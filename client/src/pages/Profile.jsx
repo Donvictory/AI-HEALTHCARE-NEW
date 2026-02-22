@@ -416,7 +416,7 @@ export function Profile() {
                   className="flex-1 h-16 rounded-[1.25rem] bg-red-600 hover:bg-red-700 font-black shadow-xl shadow-red-100"
                 >
                   <Trash2 className="w-5 h-5 mr-3" />
-                  Obliterate All Data
+                  Delete Data
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="rounded-[2rem] border-none shadow-2xl p-8">
