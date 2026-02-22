@@ -47,9 +47,9 @@ export function Layout() {
   const showNav = authenticated && onboarded && !isPublicRoute;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50">
+    <div className="min-h-screen bg-linear-to-br from-emerald-50 via-white to-blue-50">
       {showNav && <Navbar />}
-      <main className={showNav ? "pt-24" : ""}>
+      <main className={showNav ? "pt-24 pb-20" : ""}>
         <Outlet />
       </main>
 

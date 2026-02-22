@@ -109,6 +109,27 @@ export function Onboarding() {
       parseFloat(formData.height),
     );
 
+    // Map frontend labels to backend enums exactly
+    const conditionMap = {
+      None: "NONE",
+      Hypertension: "HYPERTENSION",
+      Diabetes: "DIABETES",
+      Asthma: "ASTHMA",
+      "Heart Disease": "HEART DISEASE",
+      "Malaria (Recurring)": "MALARIA",
+      "Sickle Cell": "SICKLE CELL",
+    };
+
+    const historyMap = {
+      None: "NONE",
+      Hypertension: "HYPERTENSION",
+      Diabetes: "DIABETES",
+      "Heart Disease": "HEART DISEASE",
+      Stroke: "STROKE",
+      Cancer: "CANCER",
+      "Sickle Cell": "SICKLE CELL",
+    };
+
     const payload = {
       phoneNumber: formData.phone,
       age: parseInt(formData.age),
@@ -117,14 +138,21 @@ export function Onboarding() {
       weight: parseFloat(formData.weight),
       city: formData.city,
       state: formData.state,
-      healthConditions: formData.knownConditions.filter((c) => c !== "None"),
-      familyHealthHistory: formData.familyHistory.filter((h) => h !== "None"),
-      isFirstLogin: false,
+      healthConditions: formData.knownConditions
+        .map((c) => conditionMap[c] || "NONE")
+        .filter((c) => c !== "NONE"),
+      familyHealthHistory: formData.familyHistory
+        .map((h) => historyMap[h] || "NONE")
+        .filter((h) => h !== "NONE"),
+      isFirstLogin: false, // This is the crucial bit
     };
 
     updateMeMutation.mutate(payload, {
       onSuccess: (data) => {
-        saveUserProfile({ ...data.data.user, bmi });
+        // Axios response structure is { data: { success: true, data: { user: ... } } }
+        // Our useUpdateMe hook returns response.data
+        const updatedUser = data.data?.user || data.user;
+        saveUserProfile({ ...updatedUser, bmi });
         toast.success("Welcome to DriftCare! 🎉");
         navigate("/dashboard");
       },
