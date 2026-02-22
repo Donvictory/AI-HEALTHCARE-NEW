@@ -37,8 +37,12 @@ export const getRefreshToken = () =>
   localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
 export const clearTokens = () => {
+  // Remove any legacy localStorage copies
   localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+  // Also expire the client-visible hint cookie so guards instantly see the
+  // logged-out state without waiting for an API round-trip.
+  expireCookie("is_logged_in");
 };
 
 const getCookie = (name) => {
@@ -48,20 +52,27 @@ const getCookie = (name) => {
   return null;
 };
 
-export const isAuthenticated = () => {
-  // Check for the non-httpOnly hint cookie first
-  const loginHint = getCookie("is_logged_in");
-  if (loginHint === "true") return true;
+/**
+ * Expire a non-httpOnly cookie from JavaScript by setting its Max-Age to 0.
+ * (The server clears the httpOnly tokens via the /logout endpoint.)
+ */
+const expireCookie = (name) => {
+  document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
+};
 
-  // Fallback to local storage (for legacy or mixed support)
-  return !!getAccessToken();
+export const isAuthenticated = () => {
+  // Check for the non-httpOnly hint cookie set by the server after login.
+  // This is the primary signal — no localStorage required.
+  return getCookie("is_logged_in") === "true";
 };
 
 export const logout = () => {
   localStorage.removeItem(STORAGE_KEYS.AUTH);
   localStorage.removeItem(STORAGE_KEYS.PROFILE);
-  clearTokens();
-  window.location.href = "/login";
+  clearTokens(); // clears localStorage + is_logged_in cookie
+  // NOTE: Navigation to /login is handled by the React Router auth guards
+  // after useLogout() clears the React Query 'me' cache. Avoid hard reloads
+  // here; they bypass the SPA router and reset all query caches.
 };
 
 // --- PROFILE & ONBOARDING ---

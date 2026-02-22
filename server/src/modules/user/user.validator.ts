@@ -78,5 +78,7 @@ export const onboardUserValidator = [
 ];
 
 export const refreshTokenValidator = [
-  body("refreshToken").notEmpty().withMessage("Refresh token is required"),
+  // Refresh token may arrive either as an httpOnly cookie (primary) or in the
+  // request body (legacy / non-browser clients). Make the body field optional.
+  body("refreshToken").optional().isString(),
 ];

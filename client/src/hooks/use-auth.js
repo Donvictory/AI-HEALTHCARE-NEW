@@ -1,12 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/api-client";
-import {
-  getUserProfile,
-  getUserAuth,
-  saveUserAuth,
-  saveTokens,
-  clearTokens,
-} from "../lib/storage";
+import { getUserAuth, saveUserAuth, clearTokens } from "../lib/storage";
+
+// ─── Register ──────────────────────────────────────────────────────────────────
 
 export const useRegister = () => {
   const queryClient = useQueryClient();
@@ -17,16 +14,17 @@ export const useRegister = () => {
     },
     onSuccess: (data) => {
       const user = data.data?.user || data.user;
-      const { accessToken, refreshToken } = data.data || data;
-
+      // Tokens are already set as httpOnly cookies by the server.
+      // We only persist the user object locally for offline / cold-start reads.
       if (user) {
         saveUserAuth(user);
-        saveTokens(accessToken, refreshToken);
-        queryClient.invalidateQueries(["me"]);
+        queryClient.setQueryData(["me"], user);
       }
     },
   });
 };
+
+// ─── Login ─────────────────────────────────────────────────────────────────────
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -37,39 +35,37 @@ export const useLogin = () => {
     },
     onSuccess: (data) => {
       const user = data.data?.user || data.user;
-      const { accessToken, refreshToken } = data.data || data;
-
+      // Tokens are already set as httpOnly cookies by the server.
       if (user) {
         saveUserAuth(user);
-        saveTokens(accessToken, refreshToken);
-        queryClient.invalidateQueries(["me"]);
+        queryClient.setQueryData(["me"], user);
       }
     },
   });
 };
+
+// ─── "Who am I?" ───────────────────────────────────────────────────────────────
+//
+// This query is the source of truth for the currently authenticated user.
+// The auth guards (ProtectedRoute / GuestRoute) consume it.
 
 export const useMe = () => {
   return useQuery({
     queryKey: ["me"],
     queryFn: async () => {
       try {
-        console.log("useMe: calling /users/profile...");
         const response = await apiClient.get("/users/profile");
-        console.log("useMe raw response:", response.data);
-
         const data = response.data?.data;
         let backendUser =
           data?.user || (response.data?.user ? response.data : null);
 
-        // Final check: if /profile didn't return a user structure we expect, try /me
+        // Fallback: if /profile didn't return the expected shape, try /me
         if (!backendUser) {
-          console.log("useMe: /profile didn't return user, trying /me...");
           const meResponse = await apiClient.get("/users/me");
           backendUser = meResponse.data?.data?.user || meResponse.data?.user;
         }
 
         if (backendUser) {
-          console.log("useMe: final user identified", backendUser.email);
           const enrichedUser = {
             id: backendUser._id || backendUser.id,
             ...backendUser,
@@ -79,26 +75,28 @@ export const useMe = () => {
           return enrichedUser;
         }
 
-        console.log("useMe: no user in response, checking local storage...");
-        const localUser = getUserAuth();
-        return localUser;
+        // No backend user returned — try the local cache as a last resort
+        return getUserAuth();
       } catch (error) {
-        console.error(
-          "useMe exception:",
-          error.response?.status,
-          error.message,
-        );
         if (error.response?.status === 401) {
+          // Access token expired or missing — the interceptor will handle refresh.
+          // Return null so guards can redirect.
           clearTokens();
           return null;
         }
+        // Network / server errors: don't log out the user, just return null
         return null;
       }
     },
+    // Only run this query when the browser has the session hint cookie.
+    // This avoids an unnecessary 401 round-trip on first load for guests.
+    enabled: true,
     retry: 1,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
+
+// ─── Update Profile ────────────────────────────────────────────────────────────
 
 export const useUpdateMe = () => {
   const queryClient = useQueryClient();
@@ -108,23 +106,33 @@ export const useUpdateMe = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["me"]);
+      queryClient.invalidateQueries({ queryKey: ["me"] });
     },
   });
 };
 
+// ─── Logout ────────────────────────────────────────────────────────────────────
+
 export const useLogout = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   return useMutation({
     mutationFn: async () => {
+      // Ask the server to clear the httpOnly cookies
       await apiClient.post("/users/logout");
     },
     onSettled: () => {
+      // Clear the client-side hint cookie + legacy localStorage
       clearTokens();
+      // Wipe the React Query auth cache so all guards immediately redirect
       queryClient.setQueryData(["me"], null);
+      queryClient.removeQueries({ queryKey: ["me"] });
+      navigate("/login", { replace: true });
     },
   });
 };
+
+// ─── Onboard ───────────────────────────────────────────────────────────────────
 
 export const useOnboard = () => {
   const queryClient = useQueryClient();
@@ -134,10 +142,12 @@ export const useOnboard = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["me"]);
+      queryClient.invalidateQueries({ queryKey: ["me"] });
     },
   });
 };
+
+// ─── Delete Account ────────────────────────────────────────────────────────────
 
 export const useDeleteAccount = () => {
   const queryClient = useQueryClient();
@@ -147,6 +157,7 @@ export const useDeleteAccount = () => {
     },
     onSuccess: () => {
       localStorage.clear();
+      clearTokens();
       queryClient.setQueryData(["me"], null);
     },
   });
