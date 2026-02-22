@@ -45,4 +45,27 @@ export class OpenRouterProvider implements IAIProvider {
       );
     }
   }
+
+  async chat(
+    messages: { role: "system" | "user" | "assistant"; content: string }[],
+  ): Promise<string> {
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: "google/gemini-2.5-flash",
+        messages,
+      });
+
+      const result = response.choices[0].message.content;
+      if (!result)
+        throw new AppError("Failed to get response from OpenRouter", 500);
+
+      return result;
+    } catch (error: any) {
+      console.error("OpenRouter Chat Error:", error);
+      throw new AppError(
+        `AI Chat failed: ${error.message}`,
+        error.status || 500,
+      );
+    }
+  }
 }

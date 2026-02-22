@@ -26,4 +26,14 @@ export class AIService {
     this.cache.set(cacheKey, result);
     return result;
   }
+
+  async chat(
+    messages: { role: "system" | "user" | "assistant"; content: string }[],
+    providerName: string = "openrouter",
+  ): Promise<string> {
+    const provider = this.providers.get(providerName);
+    if (!provider) throw new AppError(`AI Provider not found`, 404);
+
+    return provider.chat(messages);
+  }
 }

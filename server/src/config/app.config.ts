@@ -31,4 +31,8 @@ export const appConfig = {
     apiKey: process.env.CLOUDINARY_API_KEY,
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
+  doctors: {
+    apiUrl: process.env.DOCTORS_API_URL || "https://fake-doctors-api.com/v1",
+    apiKey: process.env.DOCTORS_API_KEY,
+  },
 };
