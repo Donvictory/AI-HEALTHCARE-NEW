@@ -20,6 +20,9 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = getAccessToken();
+    console.log(
+      `apiClient: Request to ${config.url} with token: ${token ? "exists" : "none"}`,
+    );
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
