@@ -21,7 +21,8 @@ Their known health conditions are: ${user.healthConditions?.join(", ") || "None"
 Their recent daily check-ins:
 ${JSON.stringify(checkIns, null, 2)}
 
-Provide a helpful, concise, and empathetic response to their query based on this context. 
+Provide a VERY SHORT, helpful, concise, and empathetic response to their query based on this context. 
+KEEP YOUR RESPONSE UNDER 3 SENTENCES.
 IMPORTANT: Do not act as a real doctor and advise them to seek professional medical help if it's an emergency or serious issue.`;
 
     const messages: {

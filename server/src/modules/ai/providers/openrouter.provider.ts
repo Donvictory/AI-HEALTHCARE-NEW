@@ -30,6 +30,7 @@ export class OpenRouterProvider implements IAIProvider {
           { role: "user", content: input },
         ],
         response_format: { type: "json_object" },
+        max_tokens: 500,
       });
 
       const result = response.choices[0].message.content;
@@ -53,6 +54,7 @@ export class OpenRouterProvider implements IAIProvider {
       const response = await this.openai.chat.completions.create({
         model: "google/gemini-2.5-flash",
         messages,
+        max_tokens: 300,
       });
 
       const result = response.choices[0].message.content;
