@@ -145,3 +145,16 @@ export const useLogout = () => {
     },
   });
 };
+
+export const useDeleteAccount = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await apiClient.delete("/users/me");
+    },
+    onSuccess: () => {
+      localStorage.clear();
+      queryClient.setQueryData(["me"], null);
+    },
+  });
+};

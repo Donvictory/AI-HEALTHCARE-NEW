@@ -35,11 +35,14 @@ import {
   Activity,
   Upload,
   FileText,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  CheckCircle2,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-// eslint-disable-next-line no-unused-vars
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const symptoms = [
   "None",
@@ -52,7 +55,7 @@ const symptoms = [
   "Body Aches",
 ];
 
-// Quick resilience calculation (detailed one happens in drift detection)
+// Quick resilience calculation
 function calculateQuickScore(data) {
   let score = 100;
   if (data.hoursSlept < 6) score -= 15;
@@ -67,6 +70,7 @@ function calculateQuickScore(data) {
 export function DailyCheckIn() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkInData, setCheckInData] = useState({
     hoursSlept: 7,
     stressLevel: 5,
@@ -81,10 +85,8 @@ export function DailyCheckIn() {
     reportNotes: "",
   });
   const [uploadedFile, setUploadedFile] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Check if already completed today
     const todayCheckIn = getTodaysCheckIn();
     if (todayCheckIn) {
       toast.info("You've already checked in today! 💚");
@@ -99,7 +101,6 @@ export function DailyCheckIn() {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error("File size must be less than 5MB");
         return;
@@ -110,14 +111,12 @@ export function DailyCheckIn() {
   };
 
   const handleComplete = async () => {
-    const today = new Date().toISOString().split("T")[0];
     setIsSubmitting(true);
-
-    // Artificial delay to simulate AI/Pattern analysis
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Calculate basic resilience score (will be recalculated with drift detection)
+    const today = new Date().toISOString().split("T")[0];
     const resilienceScore = calculateQuickScore(checkInData);
+
+    // Artificial delay for professional feedback
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     const checkIn = {
       id: `checkin-${Date.now()}`,
@@ -134,7 +133,6 @@ export function DailyCheckIn() {
       resilienceScore,
     };
 
-    // Save medical report if uploaded
     if (uploadedFile) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -152,8 +150,6 @@ export function DailyCheckIn() {
     }
 
     saveDailyCheckIn(checkIn);
-
-    // Award 15 points for completing check-in
     addPoints(15);
 
     setIsSubmitting(false);
@@ -164,7 +160,6 @@ export function DailyCheckIn() {
   const toggleSymptom = (symptom) => {
     setCheckInData((prev) => {
       let newSymptoms = [...prev.symptoms];
-
       if (symptom === "None") {
         newSymptoms = ["None"];
       } else {
@@ -178,7 +173,6 @@ export function DailyCheckIn() {
           newSymptoms = ["None"];
         }
       }
-
       return { ...prev, symptoms: newSymptoms };
     });
   };
@@ -188,16 +182,16 @@ export function DailyCheckIn() {
       {/* Background Decor */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-100/30 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-100/30 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-50/20 blur-[120px] rounded-full" />
       </div>
 
       <div className="w-full max-w-2xl">
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-2 px-2">
-            <span className="text-[10px] md:text-xs font-black text-emerald-600 uppercase tracking-[0.2em]">
-              Daily Check-In
+          <div className="flex items-center justify-between mb-3 px-2">
+            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">
+              Daily Vitals Protocol
             </span>
-            <span className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               Step {step} of 5
             </span>
           </div>
@@ -210,464 +204,588 @@ export function DailyCheckIn() {
           </div>
         </div>
 
-        <motion.div
-          key={step}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-          <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white/80 backdrop-blur-xl rounded-[2.5rem] overflow-hidden">
-            <CardContent className="p-8 md:p-12">
-              {/* Step 1: Sleep & Energy (Merged Stress/Mood) */}
-              {step === 1 && (
-                <div className="space-y-10">
-                  <div className="text-center space-y-2">
-                    <div className="bg-emerald-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 text-emerald-600 shadow-sm">
-                      <Heart className="w-8 h-8 fill-emerald-600" />
-                    </div>
-                    <CardTitle className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
-                      Sleep & Energy
-                    </CardTitle>
-                    <CardDescription className="text-base font-medium text-gray-400 italic">
-                      Just between me and you. No judgment, just tracking. 💚
-                    </CardDescription>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white/80 backdrop-blur-xl rounded-[2.5rem] overflow-hidden">
+              <CardHeader className="text-center pt-10 pb-2">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-emerald-50 w-20 h-20 rounded-[2.5rem] flex items-center justify-center shadow-sm">
+                    <Heart className="w-10 h-10 text-emerald-600 fill-emerald-600" />
                   </div>
-
-                  <div className="space-y-8">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
-                          How many hours did you sleep last night?
-                        </Label>
-                        <span className="text-2xl font-black text-indigo-600">
-                          {checkInData.hoursSlept}h
-                        </span>
-                      </div>
-                      <Slider
-                        value={[checkInData.hoursSlept]}
-                        onValueChange={([value]) =>
-                          setCheckInData({ ...checkInData, hoursSlept: value })
-                        }
-                        min={0}
-                        max={14}
-                        step={0.5}
-                      />
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
-                          How's your stress level today?
-                        </Label>
-                        <span className="text-2xl font-black text-purple-600">
-                          {checkInData.stressLevel}/10
-                        </span>
-                      </div>
-                      <Slider
-                        value={[checkInData.stressLevel]}
-                        onValueChange={([value]) =>
-                          setCheckInData({ ...checkInData, stressLevel: value })
-                        }
-                        min={1}
-                        max={10}
-                        step={1}
-                      />
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
-                          How's your mood right now?
-                        </Label>
-                        <span className="text-2xl font-black text-yellow-500">
-                          {checkInData.mood}/10
-                        </span>
-                      </div>
-                      <Slider
-                        value={[checkInData.mood]}
-                        onValueChange={([value]) =>
-                          setCheckInData({ ...checkInData, mood: value })
-                        }
-                        min={1}
-                        max={10}
-                        step={1}
-                      />
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleNext}
-                    className="w-full h-16 rounded-2xl bg-gray-900 text-white font-bold text-lg transition-transform active:scale-95 shadow-xl shadow-gray-200"
-                  >
-                    Next
-                  </Button>
                 </div>
-              )}
+                <CardTitle className="text-3xl font-black text-gray-900 tracking-tight">
+                  Daily Check-In
+                </CardTitle>
+                <CardDescription className="text-base font-medium text-gray-400">
+                  Just between me and you. No judgment, just tracking. 💚
+                </CardDescription>
+              </CardHeader>
 
-              {/* Step 2: Movement & Water */}
-              {step === 2 && (
-                <div className="space-y-10">
-                  <div className="text-center space-y-2">
-                    <div className="bg-orange-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 text-orange-600 shadow-sm">
-                      <Dumbbell className="w-8 h-8" />
-                    </div>
-                    <CardTitle className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
-                      Movement & Water
-                    </CardTitle>
-                    <CardDescription className="text-base font-medium text-gray-400">
-                      Walking, gym, dancing, anything counts!
-                    </CardDescription>
-                  </div>
-
-                  <div className="space-y-8">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
-                          Did you move your body today?
-                        </Label>
-                        <span className="text-2xl font-black text-orange-600">
-                          {checkInData.physicalActivity} min
-                        </span>
-                      </div>
-                      <Slider
-                        value={[checkInData.physicalActivity]}
-                        onValueChange={([value]) =>
-                          setCheckInData({
-                            ...checkInData,
-                            physicalActivity: value,
-                          })
-                        }
-                        min={0}
-                        max={180}
-                        step={5}
-                      />
-                    </div>
-
-                    <div className="space-y-4">
-                      <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
-                        How many glasses of water today?
-                      </Label>
-                      <div className="grid grid-cols-6 gap-2">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
-                          <button
-                            key={num}
-                            onClick={() =>
-                              setCheckInData({
-                                ...checkInData,
-                                waterIntake: num,
-                              })
-                            }
-                            className={`h-12 rounded-xl border-2 flex items-center justify-center font-black transition-all ${
-                              checkInData.waterIntake >= num
-                                ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100"
-                                : "bg-white border-gray-100 text-gray-300 hover:border-blue-200"
-                            }`}
-                          >
-                            {num}
-                          </button>
-                        ))}
+              <CardContent className="p-8 md:p-12">
+                {/* Step 1: Sleep & Energy */}
+                {step === 1 && (
+                  <div className="space-y-10">
+                    <div className="text-center">
+                      <div className="inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
+                        1 of 5 • Sleep & Energy
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex gap-4">
-                    <Button
-                      onClick={() => setStep(1)}
-                      variant="outline"
-                      className="flex-1 h-16 rounded-2xl border-2 font-bold uppercase tracking-widest text-xs"
-                    >
-                      Back
-                    </Button>
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Moon className="w-5 h-5 text-emerald-600" />
+                            <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
+                              How many hours did you sleep last night?
+                            </Label>
+                          </div>
+                          <span className="text-2xl font-black text-emerald-600">
+                            {checkInData.hoursSlept}h
+                          </span>
+                        </div>
+                        <Slider
+                          value={[checkInData.hoursSlept]}
+                          onValueChange={([value]) =>
+                            setCheckInData({
+                              ...checkInData,
+                              hoursSlept: value,
+                            })
+                          }
+                          min={0}
+                          max={12}
+                          step={0.5}
+                          className="py-4"
+                        />
+                        {checkInData.hoursSlept < 6 && (
+                          <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 flex items-center gap-3">
+                            <span className="text-lg">😴</span>
+                            <p className="text-xs font-bold text-orange-700 leading-tight">
+                              That's low, boss. Your body needs rest to stay
+                              sharp.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Brain className="w-5 h-5 text-emerald-600" />
+                            <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
+                              How's your stress level today?
+                            </Label>
+                          </div>
+                          <span className="text-2xl font-black text-emerald-600">
+                            {checkInData.stressLevel}/10
+                          </span>
+                        </div>
+                        <Slider
+                          value={[checkInData.stressLevel]}
+                          onValueChange={([value]) =>
+                            setCheckInData({
+                              ...checkInData,
+                              stressLevel: value,
+                            })
+                          }
+                          min={1}
+                          max={10}
+                          step={1}
+                          className="py-4"
+                        />
+                        <div className="flex justify-between text-[10px] font-black text-gray-300 uppercase tracking-widest px-1">
+                          <span>Calm</span>
+                          <span>Overwhelmed</span>
+                        </div>
+                        {checkInData.stressLevel >= 8 && (
+                          <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 flex items-center gap-3">
+                            <span className="text-lg">🫂</span>
+                            <p className="text-xs font-bold text-orange-700 leading-tight">
+                              Omo, take it easy. High stress kills slowly.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-yellow-500" />
+                            <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
+                              How's your mood right now?
+                            </Label>
+                          </div>
+                          <span className="text-2xl font-black text-yellow-600">
+                            {checkInData.mood}/10
+                          </span>
+                        </div>
+                        <Slider
+                          value={[checkInData.mood]}
+                          onValueChange={([value]) =>
+                            setCheckInData({ ...checkInData, mood: value })
+                          }
+                          min={1}
+                          max={10}
+                          step={1}
+                          className="py-4"
+                        />
+                        <div className="flex justify-between text-[10px] font-black text-gray-300 uppercase tracking-widest px-1">
+                          <span>Low</span>
+                          <span>Great</span>
+                        </div>
+                      </div>
+                    </div>
+
                     <Button
                       onClick={handleNext}
-                      className="flex-[2] h-16 rounded-2xl bg-gray-900 text-white font-bold text-lg shadow-xl shadow-gray-200"
+                      className="w-full h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
                     >
-                      Next
+                      Next Step <ChevronRight className="ml-2 w-5 h-5" />
                     </Button>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Step 3: Health Status & Symptoms */}
-              {step === 3 && (
-                <div className="space-y-10">
-                  <div className="text-center space-y-2">
-                    <div className="bg-red-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 text-red-600 shadow-sm">
-                      <Activity className="w-8 h-8" />
+                {/* Step 2: Activity & Hydration */}
+                {step === 2 && (
+                  <div className="space-y-10">
+                    <div className="text-center">
+                      <div className="inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
+                        2 of 5 • Movement & Water
+                      </div>
                     </div>
-                    <CardTitle className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
-                      Health Status & Symptoms
-                    </CardTitle>
-                    <CardDescription className="text-base font-medium text-gray-400">
-                      Select all that apply. If nothing, just tick "None"
-                    </CardDescription>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    {symptoms.map((symptom) => (
-                      <button
-                        key={symptom}
-                        onClick={() => toggleSymptom(symptom)}
-                        className={`p-4 rounded-2xl border-2 text-left transition-all ${
-                          checkInData.symptoms.includes(symptom)
-                            ? "bg-red-50 border-red-200 text-red-700 shadow-sm"
-                            : "bg-white border-gray-100 text-gray-500 hover:border-gray-200"
-                        }`}
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Dumbbell className="w-5 h-5 text-emerald-600" />
+                            <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
+                              Did you move your body today?
+                            </Label>
+                          </div>
+                          <span className="text-2xl font-black text-emerald-600">
+                            {checkInData.physicalActivity}m
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          Walking, gym, dancing, anything counts!
+                        </p>
+                        <Slider
+                          value={[checkInData.physicalActivity]}
+                          onValueChange={([value]) =>
+                            setCheckInData({
+                              ...checkInData,
+                              physicalActivity: value,
+                            })
+                          }
+                          min={0}
+                          max={120}
+                          step={5}
+                          className="py-4"
+                        />
+                        {checkInData.physicalActivity === 0 && (
+                          <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 flex items-center gap-3">
+                            <span className="text-lg">🏃‍♂️</span>
+                            <p className="text-xs font-bold text-orange-700 leading-tight">
+                              Your body needs movement. Even 10 mins counts!
+                            </p>
+                          </div>
+                        )}
+                        {checkInData.physicalActivity >= 30 && (
+                          <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center gap-3">
+                            <span className="text-lg">💪</span>
+                            <p className="text-xs font-bold text-emerald-700 leading-tight">
+                              Nice! You're putting in the work.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Droplet className="w-5 h-5 text-blue-600" />
+                            <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
+                              How many glasses of water today?
+                            </Label>
+                          </div>
+                          <span className="text-2xl font-black text-blue-600">
+                            {checkInData.waterIntake}
+                          </span>
+                        </div>
+                        <Slider
+                          value={[checkInData.waterIntake]}
+                          onValueChange={([value]) =>
+                            setCheckInData({
+                              ...checkInData,
+                              waterIntake: value,
+                            })
+                          }
+                          min={0}
+                          max={12}
+                          step={1}
+                          className="py-4"
+                        />
+                        {checkInData.waterIntake < 4 && (
+                          <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 flex items-center gap-3">
+                            <span className="text-lg">💧</span>
+                            <p className="text-xs font-bold text-orange-700 leading-tight">
+                              Drink more water, bro. Lagos heat is not joking.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <Button
+                        onClick={() => setStep(1)}
+                        variant="outline"
+                        className="flex-1 h-16 rounded-2xl border-2 font-bold hover:bg-gray-50 uppercase tracking-widest text-xs"
                       >
-                        <div className="flex items-center gap-3">
-                          <Checkbox
-                            checked={checkInData.symptoms.includes(symptom)}
-                            className="w-5 h-5 rounded-md"
-                          />
-                          <span className="font-bold text-sm">{symptom}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="space-y-4">
-                    <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
-                      How would you describe your current health status?
-                    </Label>
-                    <Select
-                      value={checkInData.healthStatus}
-                      onValueChange={(v) =>
-                        setCheckInData({ ...checkInData, healthStatus: v })
-                      }
-                    >
-                      <SelectTrigger className="h-14 rounded-xl border-2 font-bold px-6">
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="excellent">
-                          Excellent - Feeling great!
-                        </SelectItem>
-                        <SelectItem value="good">
-                          Good - Normal, no issues
-                        </SelectItem>
-                        <SelectItem value="fair">
-                          Fair - Some minor concerns
-                        </SelectItem>
-                        <SelectItem value="poor">
-                          Poor - Not feeling well
-                        </SelectItem>
-                        <SelectItem value="very-poor">
-                          Very Poor - Need medical attention
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <Button
-                      onClick={() => setStep(2)}
-                      variant="outline"
-                      className="flex-1 h-16 rounded-2xl border-2 font-bold uppercase tracking-widest text-xs"
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      onClick={handleNext}
-                      className="flex-[2] h-16 rounded-2xl bg-gray-900 text-white font-bold text-lg shadow-xl shadow-gray-200"
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 4: Medical Reports (Optional) */}
-              {step === 4 && (
-                <div className="space-y-10">
-                  <div className="text-center space-y-2">
-                    <div className="bg-emerald-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 text-emerald-600 shadow-sm">
-                      <FileText className="w-8 h-8" />
+                        <ChevronLeft className="mr-2 w-4 h-4" /> Back
+                      </Button>
+                      <Button
+                        onClick={handleNext}
+                        className="flex-[2] h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
+                      >
+                        Pathology <ChevronRight className="ml-2 w-5 h-5" />
+                      </Button>
                     </div>
-                    <CardTitle className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
-                      Medical Reports (Optional)
-                    </CardTitle>
-                    <CardDescription className="text-base font-medium text-gray-400">
-                      PDF, JPG, or PNG (Max 5MB)
-                    </CardDescription>
                   </div>
+                )}
 
-                  <div
-                    className={`relative border-2 border-dashed rounded-3xl p-10 text-center transition-all ${uploadedFile ? "bg-emerald-50 border-emerald-300" : "bg-gray-50 border-gray-200"}`}
-                  >
-                    <input
-                      id="fileUpload"
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    <label htmlFor="fileUpload" className="cursor-pointer">
-                      <Upload
-                        className={`w-10 h-10 mx-auto mb-4 ${uploadedFile ? "text-emerald-600" : "text-gray-400"}`}
-                      />
-                      <p className="font-black text-gray-900 tracking-tight">
-                        {uploadedFile ? uploadedFile.name : "Click to upload"}
-                      </p>
-                    </label>
-                  </div>
-
-                  <div className="space-y-4">
-                    <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
-                      Your feelings about the report
-                    </Label>
-                    <Textarea
-                      placeholder="E.g., My blood pressure reading was a bit high, feeling worried..."
-                      className="rounded-2xl border-2 p-4 font-medium min-h-[120px]"
-                      value={checkInData.reportNotes}
-                      onChange={(e) =>
-                        setCheckInData({
-                          ...checkInData,
-                          reportNotes: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-
-                  <div className="flex gap-4">
-                    <Button
-                      onClick={() => setStep(3)}
-                      variant="outline"
-                      className="flex-1 h-16 rounded-2xl border-2 font-bold uppercase tracking-widest text-xs"
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      onClick={handleNext}
-                      className="flex-[2] h-16 rounded-2xl bg-gray-900 text-white font-bold text-lg shadow-xl shadow-gray-200"
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 5: Final Questions */}
-              {step === 5 && (
-                <div className="space-y-10">
-                  <div className="text-center space-y-2">
-                    <div className="bg-blue-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 text-blue-600 shadow-sm">
-                      <Sparkles className="w-8 h-8" />
+                {/* Step 3: Health Status & Symptoms */}
+                {step === 3 && (
+                  <div className="space-y-10">
+                    <div className="text-center">
+                      <div className="inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
+                        3 of 5 • Health Status
+                      </div>
                     </div>
-                    <CardTitle className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
-                      Final Questions
-                    </CardTitle>
-                    <CardDescription className="text-base font-medium text-gray-400">
-                      Just between me and you. No judgment, just tracking. 💚
-                    </CardDescription>
-                  </div>
 
-                  <div className="space-y-6">
-                    <div className="p-6 bg-gray-50 rounded-3xl space-y-4 border border-gray-100">
-                      <Label className="text-xs font-black text-gray-400 uppercase tracking-widest">
-                        Quick lifestyle checks (optional)
-                      </Label>
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="flex items-center gap-3">
-                          <Checkbox
-                            checked={checkInData.drinkAlcohol}
-                            onCheckedChange={(v) =>
-                              setCheckInData({
-                                ...checkInData,
-                                drinkAlcohol: !!v,
-                              })
-                            }
-                            className="w-6 h-6 rounded-lg"
-                            id="alc"
-                          />
-                          <Label
-                            htmlFor="alc"
-                            className="font-bold text-sm text-gray-600 cursor-pointer"
-                          >
-                            Had a drink last night? 🥂
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <Label className="text-xs font-black uppercase text-gray-400 tracking-widest">
+                          How would you describe your current health status?
+                        </Label>
+                        <Select
+                          value={checkInData.healthStatus}
+                          onValueChange={(value) =>
+                            setCheckInData({
+                              ...checkInData,
+                              healthStatus: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="h-14 rounded-xl border-2 font-bold focus:ring-emerald-500">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl border-none shadow-2xl">
+                            <SelectItem value="excellent">
+                              Excellent - Feeling great!
+                            </SelectItem>
+                            <SelectItem value="good">
+                              Good - Normal, no issues
+                            </SelectItem>
+                            <SelectItem value="fair">
+                              Fair - Some minor concerns
+                            </SelectItem>
+                            <SelectItem value="poor">
+                              Poor - Not feeling well
+                            </SelectItem>
+                            <SelectItem value="very-poor">
+                              Very Poor - Need medical attention
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Activity className="w-5 h-5 text-emerald-600" />
+                          <Label className="text-xs font-black uppercase text-gray-900 tracking-widest">
+                            Any symptoms today?
                           </Label>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <Checkbox
-                            checked={checkInData.smokedToday}
-                            onCheckedChange={(v) =>
-                              setCheckInData({
-                                ...checkInData,
-                                smokedToday: !!v,
-                              })
-                            }
-                            className="w-6 h-6 rounded-lg"
-                            id="smk"
-                          />
-                          <Label
-                            htmlFor="smk"
-                            className="font-bold text-sm text-gray-600 cursor-pointer"
-                          >
-                            Did you smoke today? 🚬
-                          </Label>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          Select all that apply. If nothing, just tick "None"
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          {symptoms.map((symptom) => (
+                            <div
+                              key={symptom}
+                              onClick={() => toggleSymptom(symptom)}
+                              className={`p-4 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all ${
+                                checkInData.symptoms.includes(symptom)
+                                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm"
+                                  : "bg-white border-gray-100 text-gray-500 hover:border-emerald-100"
+                              }`}
+                            >
+                              <Checkbox
+                                id={symptom}
+                                checked={checkInData.symptoms.includes(symptom)}
+                                onCheckedChange={() => toggleSymptom(symptom)}
+                                className="w-5 h-5 border-2"
+                              />
+                              <Label
+                                htmlFor={symptom}
+                                className="cursor-pointer font-bold text-sm"
+                              >
+                                {symptom}
+                              </Label>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <Label className="text-sm font-black text-gray-400 uppercase tracking-widest">
-                        Anything else on your mind?
-                      </Label>
-                      <Textarea
-                        placeholder="Optional. Write down how you're feeling. This stays private."
-                        className="rounded-2xl border-2 p-4 font-medium min-h-[140px]"
-                        value={checkInData.journal}
-                        onChange={(e) =>
-                          setCheckInData({
-                            ...checkInData,
-                            journal: e.target.value,
-                          })
-                        }
-                      />
+                    <div className="flex gap-4">
+                      <Button
+                        onClick={() => setStep(2)}
+                        variant="outline"
+                        className="flex-1 h-16 rounded-2xl border-2 font-bold hover:bg-gray-50 uppercase tracking-widest text-xs"
+                      >
+                        <ChevronLeft className="mr-2 w-4 h-4" /> Back
+                      </Button>
+                      <Button
+                        onClick={handleNext}
+                        className="flex-[2] h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
+                      >
+                        Evidence <ChevronRight className="ml-2 w-5 h-5" />
+                      </Button>
                     </div>
                   </div>
+                )}
 
-                  <div className="flex gap-4">
-                    <Button
-                      onClick={() => setStep(4)}
-                      variant="outline"
-                      className="flex-1 h-16 rounded-2xl border-2 font-bold uppercase tracking-widest text-xs"
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      onClick={handleComplete}
-                      disabled={isSubmitting}
-                      className="flex-[2] h-16 rounded-2xl bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-black text-lg shadow-2xl shadow-emerald-100 transition-all active:scale-95 uppercase tracking-widest"
-                    >
-                      {isSubmitting ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-6 h-6 animate-spin" />
-                          <span className="animate-pulse">Analyzing...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          Secure Finish
-                          <Sparkles className="w-5 h-5 fill-white" />
-                        </div>
-                      )}
-                    </Button>
-                  </div>
+                {/* Step 4: Medical Reports */}
+                {step === 4 && (
+                  <div className="space-y-10">
+                    <div className="text-center">
+                      <div className="inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
+                        4 of 5 • Medical Reports (Optional)
+                      </div>
+                    </div>
 
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                    <p className="text-xs text-emerald-800">
-                      🔒 Everything you share is encrypted and private. We never
-                      share your data.
-                    </p>
-                    <p className="text-xs text-emerald-700 mt-1 font-semibold">
-                      +15 points for completing your daily check-in! 🎉
-                    </p>
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <Label className="text-xs font-black uppercase text-gray-400 tracking-widest">
+                          Upload Recent Medical Report
+                        </Label>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          PDF, JPG, or PNG (Max 5MB)
+                        </p>
+
+                        <div
+                          className={`relative border-2 border-dashed rounded-3xl p-8 text-center transition-all ${uploadedFile ? "bg-emerald-50 border-emerald-300" : "bg-gray-50 border-gray-100"}`}
+                        >
+                          <input
+                            id="fileUpload"
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor="fileUpload"
+                            className="cursor-pointer block"
+                          >
+                            <Upload
+                              className={`w-10 h-10 mx-auto mb-3 ${uploadedFile ? "text-emerald-600" : "text-gray-400"}`}
+                            />
+                            <p className="font-black text-gray-900 tracking-tight">
+                              {uploadedFile
+                                ? uploadedFile.name
+                                : "Click to upload"}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">
+                              Drop clinical ledger here
+                            </p>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <Label
+                          htmlFor="reportNotes"
+                          className="text-xs font-black uppercase text-gray-400 tracking-widest"
+                        >
+                          Your feelings about the report
+                        </Label>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          How do you feel about your recent test results?
+                        </p>
+                        <Textarea
+                          id="reportNotes"
+                          placeholder="E.g., My blood pressure reading was a bit high, feeling worried..."
+                          className="rounded-2xl border-2 p-4 font-medium min-h-[120px]"
+                          value={checkInData.reportNotes}
+                          onChange={(e) =>
+                            setCheckInData({
+                              ...checkInData,
+                              reportNotes: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <Button
+                        onClick={() => setStep(3)}
+                        variant="outline"
+                        className="flex-1 h-16 rounded-2xl border-2 font-bold hover:bg-gray-50 uppercase tracking-widest text-xs"
+                      >
+                        <ChevronLeft className="mr-2 w-4 h-4" /> Back
+                      </Button>
+                      <Button
+                        onClick={handleNext}
+                        className="flex-[2] h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
+                      >
+                        Reflection <ChevronRight className="ml-2 w-5 h-5" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+                )}
+
+                {/* Step 5: Lifestyle & Journal */}
+                {step === 5 && (
+                  <div className="space-y-10">
+                    <div className="text-center">
+                      <div className="inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
+                        5 of 5 • Final Questions
+                      </div>
+                    </div>
+
+                    <div className="space-y-8">
+                      <div className="p-6 bg-gray-50 rounded-3xl space-y-4 border border-gray-100">
+                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                          Quick lifestyle checks (optional)
+                        </span>
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="flex items-center gap-3">
+                            <Checkbox
+                              id="alcohol"
+                              checked={checkInData.drinkAlcohol}
+                              onCheckedChange={(checked) =>
+                                setCheckInData({
+                                  ...checkInData,
+                                  drinkAlcohol: checked,
+                                })
+                              }
+                              className="w-6 h-6 rounded-lg"
+                            />
+                            <Label
+                              htmlFor="alcohol"
+                              className="cursor-pointer text-sm font-bold text-gray-600"
+                            >
+                              Had a drink last night? 🥂 (No judgment!)
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Checkbox
+                              id="smoke"
+                              checked={checkInData.smokedToday}
+                              onCheckedChange={(checked) =>
+                                setCheckInData({
+                                  ...checkInData,
+                                  smokedToday: checked,
+                                })
+                              }
+                              className="w-6 h-6 rounded-lg"
+                            />
+                            <Label
+                              htmlFor="smoke"
+                              className="cursor-pointer text-sm font-bold text-gray-600"
+                            >
+                              Did you smoke today? 🚬 (Just tracking!)
+                            </Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <Label
+                          htmlFor="journal"
+                          className="text-xs font-black uppercase text-gray-400 tracking-widest"
+                        >
+                          Anything else on your mind?
+                        </Label>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          Optional. Write down how you're feeling. This stays
+                          private.
+                        </p>
+                        <Textarea
+                          id="journal"
+                          placeholder="E.g., Had a long day in traffic... feeling tired but okay."
+                          className="rounded-2xl border-2 p-4 font-medium min-h-[140px]"
+                          value={checkInData.journal}
+                          onChange={(e) =>
+                            setCheckInData({
+                              ...checkInData,
+                              journal: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex flex-col gap-2 shadow-sm">
+                        <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs uppercase tracking-tight">
+                          <CheckCircle2 className="w-4 h-4" /> Secure &
+                          Encrypted
+                        </div>
+                        <p className="text-[10px] text-emerald-700/80 font-medium">
+                          Everything you share is encrypted and private. We
+                          never share your data.
+                        </p>
+                        <div className="mt-1 inline-flex items-center gap-2 bg-white/50 w-fit px-3 py-1 rounded-full text-[10px] font-black text-emerald-700 uppercase">
+                          +15 points bonus 🎉
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <Button
+                        onClick={() => setStep(4)}
+                        variant="outline"
+                        className="flex-1 h-16 rounded-2xl border-2 font-bold hover:bg-gray-50 uppercase tracking-widest text-xs"
+                      >
+                        <ChevronLeft className="mr-2 w-4 h-4" /> Back
+                      </Button>
+                      <Button
+                        onClick={handleComplete}
+                        disabled={isSubmitting}
+                        className="flex-[2] h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg transition-all active:scale-95 shadow-xl shadow-emerald-100 uppercase tracking-widest flex items-center justify-center gap-2"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span>Processing...</span>
+                          </>
+                        ) : (
+                          <>Commit Vitals ✨</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="flex items-center justify-center gap-2 mt-8 opacity-50">
+          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            Privacy Multi-Factor Enabled
+          </span>
+        </div>
       </div>
     </div>
   );

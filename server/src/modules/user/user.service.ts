@@ -137,4 +137,15 @@ export class UserService {
     if (!updatedUser) throw new AppError("User not found", 404);
     return updatedUser;
   }
+
+  async deleteUserById(id: string) {
+    // 1. Delete all associated check-ins
+    await DailyCheckInModel.deleteMany({ userId: id });
+
+    // 2. Delete the user
+    const deletedUser = await UserModel.findByIdAndDelete(id);
+    if (!deletedUser) throw new AppError("User not found", 404);
+
+    return true;
+  }
 }

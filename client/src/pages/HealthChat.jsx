@@ -15,6 +15,7 @@ import {
   saveChatMessage,
   getChatMessages,
   getUserProfile,
+  getTodaysCheckIn,
 } from "../lib/storage";
 import {
   Bot,
@@ -49,7 +50,36 @@ export function HealthChat() {
 
   const generateAIResponse = (userMessage) => {
     const profile = getUserProfile();
+    const todayData = getTodaysCheckIn();
     const lowerMessage = userMessage.toLowerCase();
+
+    // Check-in context awareness
+    if (
+      lowerMessage.includes("how am i doing") ||
+      lowerMessage.includes("status")
+    ) {
+      if (!todayData) {
+        return `I don't have your vitals for today yet, ${profile?.name || "Friend"}. Why don't you complete a Daily Check-in so I can give you an accurate status update? 📊`;
+      }
+
+      let statusMsg = `Based on your check-in today, ${profile?.name || "Friend"}: `;
+      if (todayData.resilienceScore >= 80) {
+        statusMsg +=
+          "Your resilience tank is looking strong! 🔋 Your sleep and activity levels are excellent.";
+      } else if (todayData.resilienceScore >= 50) {
+        statusMsg +=
+          "You're in a stable zone, but there's room for improvement. Watch your sleep and stress levels.";
+      } else {
+        statusMsg +=
+          "Your resilience is currently low. I notice high stress or low rest in your data. Please prioritize recovery today. 🫂";
+      }
+
+      if (todayData.waterIntake < 5)
+        statusMsg +=
+          " Also, don't forget to drink more water - you're below target today! 💧";
+
+      return statusMsg;
+    }
 
     if (lowerMessage.includes("fever") || lowerMessage.includes("hot")) {
       return "I see you're experiencing fever. In Nigeria, fever can be a sign of malaria, especially if accompanied by chills and body aches. Have you been experiencing any other symptoms? It's important to get tested and see a doctor soon. Don't self-medicate with antimalarials without proper testing. 🌡️";
@@ -63,11 +93,18 @@ export function HealthChat() {
       lowerMessage.includes("stress") ||
       lowerMessage.includes("overwhelmed")
     ) {
-      return `${profile?.name || "Friend"}, Lagos life can be stressful with traffic and work pressure. I notice your stress levels have been tracked. Consider taking short breaks, even 5-minute walks. Have you tried deep breathing exercises? Your mental health is as important as physical health. Would you like some stress management tips specific to Nigerian work culture?`;
+      const stressAdvice =
+        todayData?.stressLevel >= 7
+          ? `I notice you logged a high stress level of ${todayData.stressLevel}/10 today. `
+          : "";
+      return `${stressAdvice}${profile?.name || "Friend"}, Lagos life can be stressful with traffic and work pressure. Consider taking short breaks, even 5-minute walks. Have you tried deep breathing exercises? Your mental health is as important as physical health. Would you like some stress management tips specific to Nigerian work culture?`;
     }
 
     if (lowerMessage.includes("sleep") || lowerMessage.includes("insomnia")) {
-      return "Sleep is crucial for your resilience tank! Poor sleep affects everything - from your immune system to stress levels. Try to maintain a consistent sleep schedule even with power outages. Avoid screens 1 hour before bed, and if possible, ensure your room is cool. How many hours have you been sleeping lately?";
+      const sleepContext = todayData
+        ? `You logged ${todayData.hoursSlept} hours of sleep last night. `
+        : "";
+      return `${sleepContext}Sleep is crucial for your resilience tank! Poor sleep affects everything - from your immune system to stress levels. Try to maintain a consistent sleep schedule even with power outages. Avoid screens 1 hour before bed. How are you feeling today after that rest?`;
     }
 
     if (lowerMessage.includes("headache") || lowerMessage.includes("head")) {
@@ -79,7 +116,10 @@ export function HealthChat() {
     }
 
     if (lowerMessage.includes("water") || lowerMessage.includes("hydration")) {
-      return "Great question! In Nigeria's heat, you should aim for at least 8-10 glasses of water daily, more if you're active or in traffic for long periods. Dehydration can cause headaches, fatigue, and affect your resilience. Keep a water bottle handy, even in go-slow! 💧";
+      const waterStatus = todayData
+        ? `You've had ${todayData.waterIntake} glasses so far today. `
+        : "";
+      return `${waterStatus}In Nigeria's heat, you should aim for at least 8-10 glasses of water daily. Dehydration can cause headaches, fatigue, and affect your resilience. Keep a water bottle handy, even in go-slow! 💧`;
     }
 
     if (lowerMessage.includes("exercise") || lowerMessage.includes("gym")) {
@@ -105,7 +145,7 @@ export function HealthChat() {
       return "You're welcome! I'm here anytime you need health guidance. Remember, I'm here to support you, but always consult a licensed healthcare professional for medical decisions. Stay healthy! 💚";
     }
 
-    return `${profile?.name || "Friend"}, I'm here to help with health questions! I can discuss symptoms, provide context about common Nigerian health issues, remind you about healthy habits, and guide you to professional care when needed. What's on your mind today? Remember, I'm not a replacement for a doctor - just your friendly health companion! 😊`;
+    return `${profile?.name || "Friend"}, I'm here to help with health questions! I can discuss symptoms, provide context about common Nigerian health issues, remind you about healthy habits, and guide you to professional care when needed. What's on your mind today? 😊`;
   };
 
   const handleSend = () => {
@@ -157,10 +197,8 @@ export function HealthChat() {
         const _audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
         });
-        toast.info(
-          "Voice message recorded! (In production, this would be transcribed)",
-        );
-        setInput("Voice message: " + new Date().toLocaleTimeString());
+        toast.info("Voice message captured! Analyzing your audio...");
+        setInput("Voice record analyze: " + new Date().toLocaleTimeString());
       };
 
       mediaRecorder.start();

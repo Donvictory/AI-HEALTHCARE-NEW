@@ -19,7 +19,7 @@ import {
   getTodaysCheckIn,
   getPoints,
   getHealthTasks,
-  completeHealthTask,
+  toggleHealthTask,
 } from "../lib/storage";
 import { detectDrift, generateContextualMessage } from "../lib/drift-detection";
 import {
@@ -121,11 +121,16 @@ export function Dashboard() {
     navigate("/find-doctor");
   };
 
-  const handleCompleteTask = (taskId) => {
-    completeHealthTask(taskId);
+  const handleToggleTask = (taskId) => {
+    const isNowCompleted = toggleHealthTask(taskId);
     setHealthTasks(getHealthTasks());
     setPoints(getPoints());
-    toast.success("Task completed! Points earned! 🎉");
+
+    if (isNowCompleted) {
+      toast.success("Task completed! Points earned! 🎉");
+    } else {
+      toast.info("Task unchecked. Points deducted. 🔄");
+    }
   };
 
   const handleExport = () => {
@@ -406,26 +411,29 @@ export function Dashboard() {
           </Card>
         )}
 
-        {/* 7-Day Trend (Heart Rate Integration) */}
-        {checkIns.length > 1 && (
-          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
-            <CardHeader className="bg-gray-50/50">
-              <div className="flex items-center justify-between">
-                <div>
+        {/* Biometric Trends (Longitudinal Tracker) */}
+        <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
+          <CardHeader className="bg-gray-50/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
                   <CardTitle className="text-xl">Biometric Trends</CardTitle>
-                  <CardDescription>Heart Rate & Resilience</CardDescription>
                 </div>
-                <div className="bg-blue-50 text-blue-600 px-4 py-1 rounded-full text-xs font-black uppercase">
-                  Longitudinal View
-                </div>
+                <CardDescription>Heart Rate & Resilience</CardDescription>
               </div>
-            </CardHeader>
-            <CardContent className="p-8">
+              <div className="bg-blue-50 text-blue-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                Longitudinal View
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-8">
+            {checkIns.length > 0 ? (
               <div className="h-[300px] w-full mt-4">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={300}>
                   <LineChart
                     data={chartData}
-                    margin={{ top: 5, right: 30, left: -20, bottom: 0 }}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                   >
                     <CartesianGrid
                       vertical={false}
@@ -442,7 +450,7 @@ export function Dashboard() {
                     <YAxis
                       axisLine={false}
                       tickLine={false}
-                      domain={[60, 100]}
+                      domain={[0, 100]}
                       tick={{ fontSize: 11, fill: "#94a3b8", fontWeight: 600 }}
                     />
                     <Tooltip
@@ -488,33 +496,56 @@ export function Dashboard() {
                       dataKey="bpm"
                       name="Heart Rate"
                       stroke="#3b82f6"
-                      strokeWidth={3}
+                      strokeWidth={4}
                       dot={{
-                        r: 5,
+                        r: 6,
                         fill: "#3b82f6",
                         stroke: "#fff",
-                        strokeWidth: 2,
+                        strokeWidth: 3,
                       }}
+                      activeDot={{ r: 8, strokeWidth: 0 }}
                     />
                     <Line
                       type="monotone"
                       dataKey="resilience"
                       name="Resilience"
                       stroke="#10b981"
-                      strokeWidth={3}
+                      strokeWidth={4}
                       dot={{
-                        r: 5,
+                        r: 6,
                         fill: "#10b981",
                         stroke: "#fff",
-                        strokeWidth: 2,
+                        strokeWidth: 3,
                       }}
+                      activeDot={{ r: 8, strokeWidth: 0 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <div className="h-[300px] flex flex-col items-center justify-center text-center space-y-4 bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
+                <div className="bg-white p-4 rounded-2xl shadow-sm">
+                  <TrendingUp className="w-8 h-8 text-gray-300" />
+                </div>
+                <div>
+                  <p className="text-gray-900 font-black">No Trend Data Yet</p>
+                  <p className="text-xs font-medium text-gray-500 max-w-[200px] mx-auto">
+                    Complete your first daily check-in to unlock biometric
+                    tracking.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/check-in")}
+                  className="rounded-xl font-bold border-2"
+                >
+                  Start Check-in
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Daily Health Tasks */}
         <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
@@ -535,10 +566,10 @@ export function Dashboard() {
             {healthTasks.map((task) => (
               <div
                 key={task.id}
-                onClick={() => !task.completed && handleCompleteTask(task.id)}
+                onClick={() => handleToggleTask(task.id)}
                 className={`flex items-start gap-4 p-5 rounded-3xl border-2 transition-all cursor-pointer ${
                   task.completed
-                    ? "bg-emerald-50/30 border-emerald-100 opacity-60"
+                    ? "bg-emerald-50/30 border-emerald-100 opacity-80"
                     : "bg-white border-gray-100 hover:border-emerald-500 hover:scale-[1.01] active:scale-[0.99] group shadow-sm"
                 }`}
               >

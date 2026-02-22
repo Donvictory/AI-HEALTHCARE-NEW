@@ -283,6 +283,8 @@ router.patch(
   userController.updateMe.bind(userController),
 );
 
+router.delete("/me", userController.deleteMe.bind(userController));
+
 // Restrict to admins and above
 router.use(restrictTo(UserRole.SUPER_ADMIN, UserRole.ADMIN));
 

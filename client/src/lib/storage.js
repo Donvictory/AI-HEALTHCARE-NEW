@@ -99,6 +99,14 @@ export const addPoints = (amount) => {
   localStorage.setItem(STORAGE_KEYS.POINTS, (current + amount).toString());
 };
 
+export const deductPoints = (amount) => {
+  const current = getPoints();
+  localStorage.setItem(
+    STORAGE_KEYS.POINTS,
+    Math.max(0, current - amount).toString(),
+  );
+};
+
 // --- TASKS ---
 export const getHealthTasks = () => {
   const data = localStorage.getItem(STORAGE_KEYS.TASKS);
@@ -118,16 +126,25 @@ const saveHealthTasks = (tasks) => {
   localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
 };
 
-export const completeHealthTask = (taskId) => {
+export const toggleHealthTask = (taskId) => {
   const tasks = getHealthTasks();
+  let status = null; // true for completed, false for undone
   const updated = tasks.map((t) => {
-    if (t.id === taskId && !t.completed) {
-      addPoints(t.points);
-      return { ...t, completed: true };
+    if (t.id === taskId) {
+      if (!t.completed) {
+        addPoints(t.points);
+        status = true;
+        return { ...t, completed: true };
+      } else {
+        deductPoints(t.points);
+        status = false;
+        return { ...t, completed: false };
+      }
     }
     return t;
   });
   saveHealthTasks(updated);
+  return status;
 };
 
 // --- CHAT ---

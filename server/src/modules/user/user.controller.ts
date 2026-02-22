@@ -110,6 +110,18 @@ export class UserController {
     },
   );
 
+  deleteMe = catchAsync(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      await userService.deleteUserById(req.user.id);
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+      sendSuccess(res, null, "Account deleted successfully", 204);
+    },
+  );
+
   // ─── Admin ─────────────────────────────────────────────────────────────────
 
   getAll = catchAsync(

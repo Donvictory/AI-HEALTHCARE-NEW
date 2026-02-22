@@ -21,6 +21,8 @@ export enum HealthCondition {
   HEART_DISEASE = "HEART DISEASE",
   MALARIA = "MALARIA",
   SICKLE_CELL = "SICKLE CELL",
+  STROKE = "STROKE",
+  CANCER = "CANCER",
 }
 
 export enum FamilyHealthHistory {
@@ -31,6 +33,8 @@ export enum FamilyHealthHistory {
   HEART_DISEASE = "HEART DISEASE",
   MALARIA = "MALARIA",
   SICKLE_CELL = "SICKLE CELL",
+  STROKE = "STROKE",
+  CANCER = "CANCER",
 }
 
 export interface IUserEntity {

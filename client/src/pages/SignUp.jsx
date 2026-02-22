@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "../Components/ui/card";
 import { useRegister } from "../hooks/use-auth";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function Signup() {
@@ -148,8 +148,19 @@ export function Signup() {
               </p>
             </div>
 
-            <Button type="submit" className="w-full">
-              Create Account
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={registerMutation.isPending}
+            >
+              {registerMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </Button>
 
             <div className="text-center text-sm text-gray-600">

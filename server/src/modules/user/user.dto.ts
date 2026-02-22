@@ -35,6 +35,7 @@ export interface UpdateProfileDto {
   familyHealthHistory?: FamilyHealthHistory[];
   hasCompletedDailyChecks?: boolean;
   currentDailyCheckStep?: number;
+  isFirstLogin?: boolean;
 }
 
 // ─── Response DTOs ────────────────────────────────────────────────────────────

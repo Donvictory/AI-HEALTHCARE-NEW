@@ -47,12 +47,13 @@ import {
 } from "../Components/ui/alert-dialog";
 import { motion } from "framer-motion";
 
-import { useMe, useLogout } from "../hooks/use-auth";
+import { useMe, useLogout, useDeleteAccount } from "../hooks/use-auth";
 
 export function Profile() {
   const navigate = useNavigate();
   const { data: profile, isLoading: isProfileLoading } = useMe();
   const logoutMutation = useLogout();
+  const deleteAccountMutation = useDeleteAccount();
   const [totalCheckIns, setTotalCheckIns] = useState(0);
   const [points, setPoints] = useState(0);
 
@@ -64,11 +65,17 @@ export function Profile() {
   }, []);
 
   const handleClearData = () => {
-    localStorage.clear();
-    toast.success("All data cleared. Redirecting...");
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 1500);
+    deleteAccountMutation.mutate(null, {
+      onSuccess: () => {
+        toast.success("Account and all records purged. Hope to see you again!");
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
+      },
+      onError: () => {
+        toast.error("Process failed. Please try again later.");
+      },
+    });
   };
 
   const handleLogout = () => {

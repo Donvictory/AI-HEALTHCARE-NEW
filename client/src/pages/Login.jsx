@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "../Components/ui/card";
 import { useLogin } from "../hooks/use-auth";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function Login() {
@@ -27,11 +27,12 @@ export function Login() {
     loginMutation.mutate(formData, {
       onSuccess: (data) => {
         toast.success(`Welcome back! 🎉`);
-        // The token is handled in the hook's onSuccess
-        if (data.data.user.age) {
-          navigate("/dashboard");
-        } else {
+        // Use isFirstLogin flag for routing
+        const user = data.data?.user || data.user;
+        if (user?.isFirstLogin) {
           navigate("/onboarding");
+        } else {
+          navigate("/dashboard");
         }
       },
       onError: (error) => {
@@ -91,8 +92,19 @@ export function Login() {
               />
             </div>
 
-            <Button type="submit" className="w-full">
-              Login
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loginMutation.isPending}
+            >
+              {loginMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
             </Button>
 
             <div className="text-center text-sm text-gray-600">
