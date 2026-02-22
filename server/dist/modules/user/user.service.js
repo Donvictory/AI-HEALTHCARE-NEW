@@ -51,7 +51,9 @@ class UserService {
     }
     async loginUser(data) {
         const user = await user_model_1.default.findOne({ email: data.email }).select("+password");
-        if (!user || !(await user.correctPassword(data.password))) {
+        if (!user)
+            throw new app_error_util_1.AppError("User not found", 404);
+        if (!(await user.correctPassword(data.password))) {
             throw new app_error_util_1.AppError("Incorrect email or password", 401);
         }
         const tokens = this.signTokenPair(user._id.toString());

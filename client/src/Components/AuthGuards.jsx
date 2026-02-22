@@ -17,7 +17,16 @@ export function ProtectedRoute({ children }) {
     );
   }
 
+  // Proactive check: if the 'logged_in' cookie is missing, we know for sure they aren't authenticated
+  const isLoggedIn = document.cookie.includes("logged_in=true");
+
+  if (!user && !isLoggedIn) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
   if (!user) {
+    // If we have the cookie but useMe hasn't finished or failed weirdly,
+    // it's safer to just return null/loader or redirect if it definitely failed
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -43,6 +52,12 @@ export function OnboardingRoute({ children }) {
         <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
       </div>
     );
+  }
+
+  const isLoggedIn = document.cookie.includes("logged_in=true");
+
+  if (!user && !isLoggedIn) {
+    return <Navigate to="/login" replace />;
   }
 
   if (!user) {

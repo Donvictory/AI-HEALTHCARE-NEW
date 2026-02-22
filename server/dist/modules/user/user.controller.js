@@ -37,16 +37,18 @@ exports.UserController = void 0;
 const user_service_1 = require("./user.service");
 const catch_async_util_1 = require("../../utils/catch-async.util");
 const api_response_util_1 = require("../../utils/api-response.util");
+const app_config_1 = require("../../config/app.config");
 const userService = new user_service_1.UserService();
 // 7 days in milliseconds
 const REFRESH_TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 // 1 hour in milliseconds
 const ACCESS_TOKEN_COOKIE_MAX_AGE = 1 * 60 * 60 * 1000;
 const setAuthCookies = (res, accessToken, refreshToken) => {
+    const isProd = app_config_1.appConfig.env === "production";
     const cookieOptions = {
         httpOnly: true,
-        secure: true, // Always true for cross-site cookies
-        sameSite: "none", // Required for cross-site (vercel frontend -> vercel backend)
+        secure: isProd, // Disable secure flag on localhost http
+        sameSite: isProd ? "none" : "lax", // Lax is more compatible with localhost developmental ports
     };
     res.cookie("accessToken", accessToken, {
         ...cookieOptions,
@@ -54,6 +56,11 @@ const setAuthCookies = (res, accessToken, refreshToken) => {
     });
     res.cookie("refreshToken", refreshToken, {
         ...cookieOptions,
+        maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+    });
+    res.cookie("logged_in", "true", {
+        ...cookieOptions,
+        httpOnly: false,
         maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
     });
 };
@@ -79,22 +86,25 @@ class UserController {
         }
         const { accessToken } = await userService.refreshAccessToken(token);
         // Set new access token in cookie
+        const isProd = app_config_1.appConfig.env === "production";
         res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            secure: true,
-            sameSite: "none",
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
             maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE,
         });
         (0, api_response_util_1.sendSuccess)(res, { accessToken }, "Access token refreshed", 200);
     });
     logout = (0, catch_async_util_1.catchAsync)(async (req, res, _next) => {
+        const isProd = app_config_1.appConfig.env === "production";
         const cookieOptions = {
             httpOnly: true,
-            secure: true,
-            sameSite: "none",
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
         };
         res.clearCookie("refreshToken", cookieOptions);
         res.clearCookie("accessToken", cookieOptions);
+        res.clearCookie("logged_in", { ...cookieOptions, httpOnly: false });
         (0, api_response_util_1.sendSuccess)(res, null, "Logged out successfully", 200);
     });
     // ─── Profile ───────────────────────────────────────────────────────────────

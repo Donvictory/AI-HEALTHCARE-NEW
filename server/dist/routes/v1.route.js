@@ -11,6 +11,7 @@ const doctor_route_1 = __importDefault(require("../modules/doctor/doctor.route")
 const dashboard_route_1 = __importDefault(require("../modules/dashboard/dashboard.route"));
 const cron_route_1 = __importDefault(require("../modules/cron/cron.route"));
 const chat_route_1 = __importDefault(require("../modules/chat/chat.route"));
+const task_route_1 = __importDefault(require("../modules/task/task.route"));
 const router = express_1.default.Router();
 router.use("/users", user_route_1.default);
 router.use("/media", media_route_1.default);
@@ -19,4 +20,5 @@ router.use("/doctors", doctor_route_1.default);
 router.use("/dashboard", dashboard_route_1.default);
 router.use("/cron", cron_route_1.default);
 router.use("/chat", chat_route_1.default);
+router.use("/tasks", task_route_1.default);
 exports.default = router;
