@@ -60,6 +60,23 @@ export const useNotifications = () => {
       });
     }
 
+    // 4. Remedy Tasks Ready (After Check-in)
+    if (todayCheckIn) {
+      list.push({
+        id: `remedy-ready-${new Date().toISOString().split("T")[0]}`,
+        type: "success",
+        title: "Remedies Generated",
+        message:
+          "New personalized health tasks are ready based on today's vitals.",
+        severity: "low",
+        timestamp:
+          todayCheckIn.createdAt ||
+          todayCheckIn.date ||
+          new Date().toISOString(),
+        icon: "sparkles",
+      });
+    }
+
     return list.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }, [checkIns, profile, todayCheckIn]);
 

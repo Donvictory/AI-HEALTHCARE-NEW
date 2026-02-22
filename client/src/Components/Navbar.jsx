@@ -145,6 +145,8 @@ export function Navbar() {
                               <Calendar className="w-5 h-5" />
                             ) : n.icon === "award" ? (
                               <Award className="w-5 h-5" />
+                            ) : n.icon === "sparkles" ? (
+                              <Sparkles className="w-5 h-5" />
                             ) : (
                               <Info className="w-5 h-5" />
                             )}
