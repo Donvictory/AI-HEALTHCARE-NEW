@@ -37,6 +37,118 @@ function pickUnique(rng, pool, n) {
  * Each template is a function(profile) → { title, description, icon }
  */
 const TASK_POOL = {
+  // ── Pattern 1: Hypertension Risk (PRD Pattern) ──────────────────────────────
+  hypertension_risk: [
+    {
+      title: "Check your blood pressure now",
+      description:
+        "Stress + headache + poor sleep detected. If BP is >140/90, please rest and consult a doctor.",
+      icon: "🩺",
+    },
+    {
+      title: "Zero-salt day starting now",
+      description:
+        "Sodium spikes blood pressure. Stick to natural flavors like lemon or garlic today.",
+      icon: "🚫",
+    },
+    {
+      title: "Hibiscus (Zobo) tea without sugar",
+      description:
+        "Unsweetened hibiscus tea is shown to naturally support healthy blood pressure levels.",
+      icon: "🍵",
+    },
+    {
+      title: "20-minute guided relaxation",
+      description:
+        "Lowering your heart rate through deep breathing can acutely lower blood pressure.",
+      icon: "🧘",
+    },
+  ],
+
+  // ── Pattern 2: Febrile Illness (PRD Pattern) ─────────────────────────────────
+  febrile_illness: [
+    {
+      title: "Get a Malaria RDT test",
+      description:
+        "Fever + fatigue detected. Visit a pharmacy for a Rapid Diagnostic Test immediately.",
+      icon: "🌡️",
+    },
+    {
+      title: "Hydrate with ORS or coconut water",
+      description:
+        "Febrile illness causes rapid fluid loss. Replace electrolytes immediately.",
+      icon: "🥥",
+    },
+    {
+      title: "Complete bed rest for 12 hours",
+      description:
+        "Your immune system needs all your energy. No work, no screens, just recovery.",
+      icon: "🛌",
+    },
+    {
+      title: "Stay in a well-ventilated, cool space",
+      description:
+        "Keep your body temperature stable. Avoid heavy blankets if you have a fever.",
+      icon: "🌬️",
+    },
+  ],
+
+  // ── Pattern 3: Stress & Burnout (PRD Pattern) ────────────────────────────────
+  stress_burnout: [
+    {
+      title: "Delete one non-essential task today",
+      description:
+        "Burnout risk detected. Protect your mental energy by saying 'no' to one thing today.",
+      icon: "✂️",
+    },
+    {
+      title: "15-minute 'No-Phone' morning",
+      description:
+        "The first hour of your day sets your cortisol. Keep the digital world away.",
+      icon: "📵",
+    },
+    {
+      title: "Journal: What's draining you?",
+      description:
+        "Naming the source of stress reduces its power. Write it down for 5 minutes.",
+      icon: "✍️",
+    },
+    {
+      title: "Call a supportive family member",
+      description:
+        "Social support is the strongest buffer against psychological burnout.",
+      icon: "📞",
+    },
+  ],
+
+  // ── Pattern 4: Diabetes Risk (PRD Pattern) ───────────────────────────────────
+  diabetes_risk: [
+    {
+      title: "Fast for 12 hours tonight",
+      description:
+        "Giving your insulin a break helps improve sensitivity. Stop eating by 8 PM.",
+      icon: "🌙",
+    },
+    {
+      title: "Swap white rice for local beans/legumes",
+      description:
+        "Lower the glycemic load of your meal to prevent blood sugar spikes.",
+      icon: "🥘",
+    },
+    {
+      title: "Brisk walk immediately after dinner",
+      description:
+        "Muscles burn glucose best right after you eat. Even 15 minutes makes a difference.",
+      icon: "🏃",
+    },
+    {
+      title: "Check blood sugar at a pharmacy",
+      description:
+        "Early detection of pre-diabetes allows for 100% reversal through lifestyle.",
+      icon: "💉",
+    },
+  ],
+
   // ── Sleep Issues ────────────────────────────────────────────────────────────
   poor_sleep: [
     {
@@ -46,90 +158,47 @@ const TASK_POOL = {
       icon: "🌙",
     },
     {
-      title: "Try a 10-min sleep wind-down",
-      description:
-        "Lie still, breathe deeply, and let your muscles relax from feet upward.",
-      icon: "😴",
-    },
-    {
-      title: "Keep your room cool & dark",
-      description:
-        "Ideal sleep temperature is 18–22°C. Cover windows and turn off harsh lights.",
-      icon: "🛏️",
-    },
-    {
       title: "Set a consistent bedtime alarm",
       description:
         "Your circadian rhythm strengthens with regularity. Aim for the same bedtime.",
       icon: "⏰",
     },
+    {
+      title: "Try Magnesium-rich food tonight",
+      description:
+        "Bananas, almonds, or leafy greens help relax muscles for better sleep.",
+      icon: "🍌",
+    },
   ],
 
-  // ── High Stress ──────────────────────────────────────────────────────────────
+  // ── High Stress (General) ────────────────────────────────────────────────────
   high_stress: [
     {
       title: "5-minute box breathing session",
       description:
-        "Inhale 4s → Hold 4s → Exhale 4s → Hold 4s. Repeat 5 times. Reduces cortisol fast.",
+        "Inhale 4s -> Hold 4s -> Exhale 4s -> Hold 4s. Reduces cortisol fast.",
       icon: "🧘",
     },
     {
-      title: "Write 3 things you're grateful for",
-      description:
-        "Gratitude journaling rewires the brain away from threat-mode. Takes 5 minutes.",
-      icon: "📝",
-    },
-    {
       title: "Take a 15-min outdoor walk",
-      description:
-        "Daylight + movement drops cortisol and boosts serotonin. No phone during the walk.",
+      description: "Daylight + movement drops cortisol and boosts serotonin.",
       icon: "🚶",
-    },
-    {
-      title: "Talk to one person you trust today",
-      description:
-        "Social connection is one of the strongest stress buffers. Even a 5-min call counts.",
-      icon: "💬",
-    },
-    {
-      title: "Set 3 boundaries for today",
-      description:
-        "Identify 3 things you will NOT do today. Saying no is a health act.",
-      icon: "🚧",
     },
   ],
 
   // ── Low Activity ─────────────────────────────────────────────────────────────
   low_activity: [
     {
-      title: "20-minute brisk walk after eating",
+      title: "Home workout: 3 sets of 10 squats",
       description:
-        "Post-meal walks lower blood glucose and improve cardiovascular function.",
-      icon: "🏃",
-    },
-    {
-      title: "10 squats every hour (4 times today)",
-      description:
-        "Micro-movement keeps metabolism active even on sedentary days.",
+        "Big muscle movement is the best way to wake up your metabolism.",
       icon: "🏋️",
     },
     {
-      title: "Dance for one full song",
+      title: "Park further away or walk the long way",
       description:
-        "3 minutes of movement elevates mood, burns calories, and counts as exercise.",
-      icon: "💃",
-    },
-    {
-      title: "Take the stairs at least twice",
-      description:
-        "Stair climbing is a full-body workout requiring zero equipment.",
-      icon: "🪜",
-    },
-    {
-      title: "10-min morning stretch routine",
-      description:
-        "Stretching improves circulation and reduces muscle tension from overnight rest.",
-      icon: "🤸",
+        "Add 500 extra steps to your day through simple 'active' choices.",
+      icon: "🛣️",
     },
   ],
 
@@ -137,163 +206,77 @@ const TASK_POOL = {
   dehydration: [
     {
       title: "Drink a full glass of water now",
-      description:
-        "Start a hydration cascade. One glass leads to another. Your kidneys will thank you.",
+      description: "Start a hydration cascade. Your kidneys will thank you.",
       icon: "💧",
     },
     {
-      title: "Add lemon or cucumber to your water",
+      title: "Carry a 1L water bottle today",
       description:
-        "Flavoured water dramatically increases how much you actually drink through the day.",
-      icon: "🍋",
-    },
-    {
-      title: "Set hourly water reminders",
-      description:
-        "Your phone can be your hydration coach. Set alarms for 10 AM, 12 PM, 3 PM, 6 PM.",
-      icon: "⏱️",
-    },
-    {
-      title: "Eat a water-rich fruit or vegetable",
-      description:
-        "Watermelon, cucumber, or orange is 90%+ water. Great way to hydrate while eating.",
-      icon: "🍉",
+        "Visual cues are the best way to ensure you actually drink water.",
+      icon: "🍼",
     },
   ],
 
   // ── Poor Mood ────────────────────────────────────────────────────────────────
   low_mood: [
     {
-      title: "Get 20 minutes of morning sunlight",
+      title: "Morning light for 15 minutes",
       description:
-        "Morning light regulates serotonin and dopamine — the mood trifecta. Go outside.",
+        "Natural light resets your mood-regulating hormones. Go outside early.",
       icon: "☀️",
     },
     {
-      title: "Do one small thing you enjoy today",
-      description:
-        "Pick ONE enjoyable activity (music, food, hobby) — even 15 minutes matters.",
-      icon: "🎯",
-    },
-    {
-      title: "Clean or tidy one small space",
-      description:
-        "Environmental order reduces cognitive load and creates a mood lift signal.",
-      icon: "🧹",
-    },
-    {
-      title: "Avoid social media for 2 hours",
-      description:
-        "Comparison culture feeds low mood. A digital detox gives your mind breathing room.",
-      icon: "📵",
+      title: "Listen to your favorite upbeat song",
+      description: "Audio-therapy is a fast way to shift your emotional state.",
+      icon: "🎵",
     },
   ],
 
   // ── Fatigue / Febrile Symptoms ───────────────────────────────────────────────
   fatigue: [
     {
-      title: "Rest fully — no heavy work today",
+      title: "Power nap: 20 minutes only",
       description:
-        "Fatigue is your body signalling recovery mode. Honour it. Productivity can wait.",
-      icon: "🛌",
-    },
-    {
-      title: "Eat a nourishing, protein-rich meal",
-      description:
-        "Eggs, beans, or fish give your cells what they need to repair and recover.",
-      icon: "🍳",
-    },
-    {
-      title: "Check your temperature",
-      description:
-        "If you have a thermometer at home, record your temperature now and again in 4 hours.",
-      icon: "🌡️",
-    },
-    {
-      title: "Sip warm fluids every 30 minutes",
-      description:
-        "Warm water, herbal tea, or pepper soup helps your immune response and keeps you hydrated.",
-      icon: "🍵",
+        "Short naps restore cognitive function without the 'sleep drunkenness'.",
+      icon: "😴",
     },
   ],
 
   // ── Headache ─────────────────────────────────────────────────────────────────
   headache: [
     {
-      title: "Drink 500ml of water immediately",
+      title: "Stay away from bright lights",
       description:
-        "Dehydration is the most common cause of headaches in Nigeria's warm climate.",
-      icon: "💧",
-    },
-    {
-      title: "Step away from your screen for 30 min",
-      description:
-        "Eye strain and screen tension are top headache triggers. Give your eyes a break.",
-      icon: "👁️",
-    },
-    {
-      title: "Apply cold or warm compress to neck",
-      description:
-        "A cool compress at the base of your skull can relieve tension headaches in minutes.",
-      icon: "🧊",
-    },
-    {
-      title: "Check your blood pressure if possible",
-      description:
-        "Recurring headaches with high stress may signal blood pressure changes. Get it checked.",
-      icon: "🩺",
+        "Photophobia often accompanies headaches. Opt for soft, dim lighting.",
+      icon: "💡",
     },
   ],
 
   // ── Smoking / Alcohol ────────────────────────────────────────────────────────
   smoking: [
     {
-      title: "Delay your first cigarette by 30 min",
+      title: "Hold off for 1 hour after waking",
       description:
-        "Each delay lengthens your window of control. Small delays build into zero cravings.",
+        "Breaking the immediate morning habit is the first step to control.",
       icon: "⏳",
-    },
-    {
-      title: "Replace cigarette break with a walk",
-      description:
-        "The craving peak lasts 3–5 minutes. A short walk outlasts it and oxygenates your lungs.",
-      icon: "🚶",
     },
   ],
 
   alcohol: [
     {
-      title: "Drink one extra glass of water today",
+      title: "Double your water intake today",
       description:
-        "Alcohol depletes your hydration. Rebalance with extra fluid intake today.",
+        "Alcohol is a diuretic. Your body needs 2x water to recover.",
       icon: "💧",
-    },
-    {
-      title: "Eat a liver-supportive meal today",
-      description:
-        "Green vegetables, garlic, and turmeric support liver recovery after alcohol.",
-      icon: "🥦",
     },
   ],
 
-  // ── High BMI / Diabetes Risk ─────────────────────────────────────────────────
+  // ── High BMI (General) ───────────────────────────────────────────────────────
   high_bmi: [
     {
-      title: "Replace one refined carb with protein",
+      title: "Zero fizzy drinks today",
       description:
-        "Swap white bread or rice for eggs, beans, or fish in one meal today.",
-      icon: "🍽️",
-    },
-    {
-      title: "Walk for 20 minutes after your largest meal",
-      description:
-        "Post-meal walks are the single most effective way to manage blood glucose spikes.",
-      icon: "🏃",
-    },
-    {
-      title: "Skip sugary drinks for today",
-      description:
-        "Soft drinks and juice are the biggest blood glucose offenders. Choose water or zobo.",
+        "Sugar in liquids is the fastest driver of weight gain and insulin resistance.",
       icon: "🚫",
     },
   ],
@@ -303,26 +286,14 @@ const TASK_POOL = {
     {
       title: "Take 5 deep breaths right now",
       description:
-        "Conscious breathing activates your parasympathetic nervous system. Do it now.",
+        "Conscious breathing activates your recovery system. Do it now.",
       icon: "🌬️",
     },
     {
-      title: "Eat at least one fruit or vegetable today",
+      title: "Eat one more green vegetable",
       description:
-        "Whole-food micronutrients protect every system in your body. Make it happen.",
-      icon: "🥗",
-    },
-    {
-      title: "Log tomorrow's check-in reminder",
-      description:
-        "Consistency in tracking is the biggest predictor of long-term health improvement.",
-      icon: "📅",
-    },
-    {
-      title: "Tell someone close how you're feeling",
-      description:
-        "Emotional health is physical health. Naming your feelings reduces cortisol.",
-      icon: "❤️",
+        "Fiber feeds your gut microbiome, which controls 70% of your immunity.",
+      icon: "🥬",
     },
   ],
 };
@@ -354,43 +325,67 @@ function rankCategories(checkIn, profile) {
     checkIn.healthStatus ||
     "GOOD"
   ).toUpperCase();
+  const familyHistory = profile?.familyHistory || [];
 
-  // Score each category (higher = more urgent)
-  if (sleep < 5) scores.push({ key: "poor_sleep", score: 10 });
-  else if (sleep < 6.5) scores.push({ key: "poor_sleep", score: 6 });
-
-  if (stress >= 8) scores.push({ key: "high_stress", score: 10 });
-  else if (stress >= 6) scores.push({ key: "high_stress", score: 7 });
-
-  if (mood <= 3) scores.push({ key: "low_mood", score: 9 });
-  else if (mood <= 5) scores.push({ key: "low_mood", score: 5 });
-
-  if (activity < 10) scores.push({ key: "low_activity", score: 8 });
-  else if (activity < 20) scores.push({ key: "low_activity", score: 4 });
-
-  if (water < 4) scores.push({ key: "dehydration", score: 8 });
-  else if (water < 6) scores.push({ key: "dehydration", score: 5 });
-
-  const hasFatigue = symptoms.some((s) =>
-    s.match(/FATIGUE|TIRED|WEAKNESS|WEAKNESS/i),
-  );
   const hasFever = symptoms.some((s) => s.match(/FEVER/i));
   const hasHeadache = symptoms.some((s) => s.match(/HEADACHE|HEAD/i));
+  const hasFatigue = symptoms.some((s) => s.match(/FATIGUE|TIRED|WEAKNESS/i));
+  const hasChestPain = symptoms.some((s) => s.match(/CHEST/i));
 
-  if (hasFever || health === "SICK") scores.push({ key: "fatigue", score: 10 });
-  else if (hasFatigue) scores.push({ key: "fatigue", score: 7 });
+  // ── 4 CLINICAL DRIFT PATTERNS (Highest Priority) ──
 
-  if (hasHeadache) scores.push({ key: "headache", score: 8 });
+  // 1. Hypertension Risk
+  const hbSignals = [
+    stress >= 7.5,
+    hasHeadache,
+    sleep < 5.5,
+    familyHistory.some((h) => /hypertension|bp|pressure/i.test(h)),
+    hasChestPain,
+  ].filter(Boolean).length;
+  if (hbSignals >= 3) scores.push({ key: "hypertension_risk", score: 15 });
+
+  // 2. Febrile Illness
+  const feverSignals = [
+    hasFever,
+    hasFatigue,
+    activity < 10,
+    hasHeadache,
+    health === "SICK",
+  ].filter(Boolean).length;
+  if (feverSignals >= 3) scores.push({ key: "febrile_illness", score: 12 });
+
+  // 3. Stress & Burnout
+  const burnoutSignals = [
+    stress >= 8,
+    mood <= 4,
+    sleep < 5,
+    health === "POOR",
+  ].filter(Boolean).length;
+  if (burnoutSignals >= 3) scores.push({ key: "stress_burnout", score: 11 });
+
+  // 4. Diabetes Risk
+  const diabetesSignals = [
+    bmi > 27,
+    activity < 15,
+    hasFatigue,
+    familyHistory.some((h) => /diabetes|sugar/i.test(h)),
+  ].filter(Boolean).length;
+  if (diabetesSignals >= 3) scores.push({ key: "diabetes_risk", score: 10 });
+
+  // ── BEHAVIORAL DEVIATIONS ──
+  if (sleep < 5) scores.push({ key: "poor_sleep", score: 9 });
+  if (stress >= 7) scores.push({ key: "high_stress", score: 8 });
+  if (mood <= 4) scores.push({ key: "low_mood", score: 8 });
+  if (activity < 10) scores.push({ key: "low_activity", score: 7 });
+  if (water < 5) scores.push({ key: "dehydration", score: 7 });
+  if (hasHeadache) scores.push({ key: "headache", score: 7 });
 
   if (lifestyle.includes("SMOKED_TODAY"))
-    scores.push({ key: "smoking", score: 7 });
+    scores.push({ key: "smoking", score: 6 });
   if (lifestyle.includes("DRANK_LAST_NIGHT"))
     scores.push({ key: "alcohol", score: 6 });
 
-  if (bmi > 27) scores.push({ key: "high_bmi", score: 7 });
-  else if (bmi > 25) scores.push({ key: "high_bmi", score: 4 });
-
-  // Always pad with general if we don't have enough
+  // Always pad with general
   scores.push({ key: "general", score: 1 });
 
   // Sort by urgency, dedup by key

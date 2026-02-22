@@ -67,7 +67,8 @@ export function Dashboard() {
   const { data: profile, isLoading: isProfileLoading } = useMe();
   const { data: backendCheckIns, isLoading: isCheckInsLoading } =
     useDailyCheckIns();
-  const { data: backendTodayCheckIn } = useTodayCheckIn();
+  const { data: backendTodayCheckIn, isLoading: isTodayLoading } =
+    useTodayCheckIn();
 
   const [checkIns, setCheckIns] = useState([]);
   const [todayCheckIn, setTodayCheckIn] = useState(null);
@@ -148,7 +149,7 @@ export function Dashboard() {
     }
   }, [profile, backendCheckIns, backendTodayCheckIn]);
 
-  const isLoading = isProfileLoading || isCheckInsLoading;
+  const isLoading = isProfileLoading || isCheckInsLoading || isTodayLoading;
 
   if (isLoading) {
     return (
