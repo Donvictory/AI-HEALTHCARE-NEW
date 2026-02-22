@@ -638,94 +638,170 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Daily Health Tasks */}
+        {/* Daily Health Tasks — All in one section */}
         <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
           <CardHeader className="bg-emerald-50/50">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl">Daily Health Tasks</CardTitle>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <Sparkles className="w-6 h-6 text-emerald-600" />
+                  Daily Health Tasks
+                </CardTitle>
                 <CardDescription>
-                  Improve your consistency to earn rewards
+                  {remedyTasks.length > 0
+                    ? "Personalized tasks based on your check-in data"
+                    : "Complete a check-in to unlock personalized remedy tasks"}
                 </CardDescription>
               </div>
               <div className="bg-emerald-600 text-white px-4 py-1 rounded-full text-xs font-bold">
-                {completedTasks}/{healthTasks.length} Complete
+                {remedyTasks.filter((t) => t.completed).length + completedTasks}
+                /{remedyTasks.length + healthTasks.length} Done
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
-            {healthTasks.map((task) => (
-              <div
-                key={task.id}
-                onClick={() => handleToggleTask(task.id)}
-                className={`flex items-start gap-4 p-5 rounded-3xl border-2 transition-all cursor-pointer ${
-                  task.completed
-                    ? "bg-emerald-50/30 border-emerald-100 opacity-80"
-                    : "bg-white border-gray-100 hover:border-emerald-500 hover:scale-[1.01] active:scale-[0.99] group shadow-sm"
-                }`}
-              >
-                <div className="mt-1">
-                  {task.completed ? (
-                    <div className="w-7 h-7 bg-emerald-600 rounded-xl flex items-center justify-center">
-                      <CheckCircle className="w-5 h-5 text-white" />
-                    </div>
-                  ) : (
-                    <div className="w-7 h-7 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-                      <Circle className="w-5 h-5 text-gray-400 group-hover:text-emerald-500" />
-                    </div>
-                  )}
+            {/* Personalized Remedy Tasks (from check-in) */}
+            {remedyTasks.length > 0 ? (
+              <>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-px flex-1 bg-emerald-100" />
+                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                    Recommended Remedies
+                  </span>
+                  <div className="h-px flex-1 bg-emerald-100" />
                 </div>
-                <div className="flex-1">
+                {remedyTasks.map((task) => (
                   <div
-                    className={`text-lg font-black ${task.completed ? "line-through text-gray-400" : "text-gray-900"}`}
+                    key={task.id}
+                    onClick={() => handleToggleTask(task.id, true)}
+                    className={`flex items-start gap-4 p-5 rounded-3xl border-2 transition-all cursor-pointer ${
+                      task.completed
+                        ? "bg-emerald-50/30 border-emerald-100 opacity-80"
+                        : "bg-white border-gray-100 hover:border-emerald-500 hover:scale-[1.01] active:scale-[0.99] group shadow-sm"
+                    }`}
                   >
-                    {task.title}
-                  </div>
-                  <div className="text-sm font-medium text-gray-500 mt-0.5">
-                    {task.description}
-                  </div>
-                  <div className="flex items-center gap-2 mt-3">
-                    <div className="bg-yellow-50 px-2.5 py-1 rounded-lg flex items-center gap-1.5 ring-1 ring-yellow-100">
-                      <Award className="w-4 h-4 text-yellow-500" />
-                      <span className="text-xs font-black text-yellow-700">
-                        +{task.points} PTS
-                      </span>
+                    <div className="mt-1">
+                      {task.completed ? (
+                        <div className="w-7 h-7 bg-emerald-600 rounded-xl flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5 text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-7 h-7 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                          <Circle className="w-5 h-5 text-gray-400 group-hover:text-emerald-500" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{task.icon}</span>
+                        <div
+                          className={`text-lg font-black ${task.completed ? "line-through text-gray-400" : "text-gray-900"}`}
+                        >
+                          {task.title}
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium text-gray-500 mt-1">
+                        {task.description}
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <div className="bg-yellow-50 px-2.5 py-1 rounded-lg flex items-center gap-1.5 ring-1 ring-yellow-100">
+                          <Award className="w-4 h-4 text-yellow-500" />
+                          <span className="text-xs font-black text-yellow-700">
+                            +{task.points} PTS
+                          </span>
+                        </div>
+                        <div className="bg-emerald-50 px-2.5 py-1 rounded-lg ring-1 ring-emerald-100">
+                          <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">
+                            {task.category?.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                ))}
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center py-8 space-y-3 bg-emerald-50/30 rounded-3xl border-2 border-dashed border-emerald-100">
+                <div className="bg-white p-3 rounded-2xl shadow-sm">
+                  <Heart className="w-6 h-6 text-emerald-300" />
                 </div>
+                <div>
+                  <p className="text-emerald-900 font-black text-sm">
+                    No Remedy Tasks Yet
+                  </p>
+                  <p className="text-xs font-medium text-gray-500 max-w-[240px] mx-auto">
+                    Complete your daily check-in to get personalized health
+                    remedies.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/check-in")}
+                  className="rounded-xl font-bold border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                >
+                  Start Check-in
+                </Button>
               </div>
-            ))}
+            )}
+
+            {/* Static Health Habits — always visible */}
+            {healthTasks.length > 0 && (
+              <>
+                <div className="flex items-center gap-2 mt-6 mb-2">
+                  <div className="h-px flex-1 bg-blue-100" />
+                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                    Daily Habits
+                  </span>
+                  <div className="h-px flex-1 bg-blue-100" />
+                </div>
+                {healthTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    onClick={() => handleToggleTask(task.id)}
+                    className={`flex items-start gap-4 p-5 rounded-3xl border-2 transition-all cursor-pointer ${
+                      task.completed
+                        ? "bg-blue-50/30 border-blue-100 opacity-80"
+                        : "bg-white border-gray-100 hover:border-blue-400 hover:scale-[1.01] active:scale-[0.99] group shadow-sm"
+                    }`}
+                  >
+                    <div className="mt-1">
+                      {task.completed ? (
+                        <div className="w-7 h-7 bg-blue-600 rounded-xl flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5 text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-7 h-7 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                          <Circle className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div
+                        className={`text-lg font-black ${task.completed ? "line-through text-gray-400" : "text-gray-900"}`}
+                      >
+                        {task.title}
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <div className="bg-yellow-50 px-2.5 py-1 rounded-lg flex items-center gap-1.5 ring-1 ring-yellow-100">
+                          <Award className="w-4 h-4 text-yellow-500" />
+                          <span className="text-xs font-black text-yellow-700">
+                            +{task.points} PTS
+                          </span>
+                        </div>
+                        <div className="bg-blue-50 px-2.5 py-1 rounded-lg ring-1 ring-blue-100">
+                          <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                            Habit
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </CardContent>
         </Card>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Button
-            onClick={handleCheckIn}
-            className="h-28 rounded-[2rem] flex flex-col gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-xl shadow-emerald-100 transition-all hover:scale-105"
-          >
-            <Calendar className="w-8 h-8" />
-            <span className="font-black text-lg">
-              {todayCheckIn ? "Completed ✓" : "Daily Check-In"}
-            </span>
-          </Button>
-          <Button
-            onClick={handleFindDoctor}
-            variant="outline"
-            className="h-28 rounded-[2rem] flex flex-col gap-2 border-2 border-emerald-100 text-emerald-700 hover:bg-emerald-50 shadow-xl shadow-emerald-50 group transition-all hover:scale-105"
-          >
-            <MapPin className="w-8 h-8 group-hover:animate-bounce" />
-            <span className="font-black text-lg">Find Local Care</span>
-          </Button>
-          <Button
-            onClick={handleExport}
-            variant="outline"
-            className="h-28 rounded-[2rem] flex flex-col gap-2 border-2 border-purple-100 text-purple-700 hover:bg-purple-50 shadow-xl shadow-purple-50 group transition-all hover:scale-105"
-          >
-            <FileText className="w-8 h-8 group-hover:rotate-12" />
-            <span className="font-black text-lg">Export Report</span>
-          </Button>
-        </div>
 
         {/* Stats Card */}
         <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
@@ -769,7 +845,7 @@ export function Dashboard() {
         </Card>
 
         {/* Footer Note */}
-        <Card className="bg-gradient-to-br from-emerald-600 to-blue-700 text-white border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
+        <Card className="bg-gradient-to-br from-emerald-600 to-blue-700 text-white border-none shadow-2xl rounded-[2.5rem] overflow-hidden mb-28">
           <CardContent className="p-10 relative">
             <div className="absolute top-0 right-0 p-12 opacity-10">
               <Sparkles className="w-24 h-24" />
@@ -803,6 +879,37 @@ export function Dashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Sticky Action Buttons — always visible at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-t border-gray-100 shadow-[0_-4px_30px_rgba(0,0,0,0.08)]">
+        <div className="max-w-5xl mx-auto px-4 py-3 grid grid-cols-3 gap-3">
+          <Button
+            onClick={handleCheckIn}
+            className="h-16 md:h-20 rounded-2xl flex flex-col gap-1 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all hover:scale-[1.02] active:scale-95"
+          >
+            <Calendar className="w-5 h-5 md:w-6 md:h-6" />
+            <span className="font-black text-[10px] md:text-sm">
+              {todayCheckIn ? "Completed ✓" : "Check-In"}
+            </span>
+          </Button>
+          <Button
+            onClick={handleFindDoctor}
+            variant="outline"
+            className="h-16 md:h-20 rounded-2xl flex flex-col gap-1 border-2 border-emerald-100 text-emerald-700 hover:bg-emerald-50 shadow-lg group transition-all hover:scale-[1.02] active:scale-95"
+          >
+            <MapPin className="w-5 h-5 md:w-6 md:h-6 group-hover:animate-bounce" />
+            <span className="font-black text-[10px] md:text-sm">Find Care</span>
+          </Button>
+          <Button
+            onClick={handleExport}
+            variant="outline"
+            className="h-16 md:h-20 rounded-2xl flex flex-col gap-1 border-2 border-purple-100 text-purple-700 hover:bg-purple-50 shadow-lg group transition-all hover:scale-[1.02] active:scale-95"
+          >
+            <FileText className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-12" />
+            <span className="font-black text-[10px] md:text-sm">Export</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
