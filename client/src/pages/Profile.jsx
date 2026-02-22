@@ -53,25 +53,8 @@ import { useDailyCheckIns } from "../hooks/use-daily-check-in";
 export function Profile() {
   const navigate = useNavigate();
   const { data: profile, isLoading: isProfileLoading } = useMe();
-  const { data: backendCheckIns } = useDailyCheckIns();
   const logoutMutation = useLogout();
   const deleteAccountMutation = useDeleteAccount();
-  const [totalCheckIns, setTotalCheckIns] = useState(0);
-  const [points, setPoints] = useState(0);
-
-  useEffect(() => {
-    // 1. Get Local Fallbacks
-    const localCheckIns = getDailyCheckIns();
-    const userPoints = getPoints();
-
-    // 2. Merge with Backend
-    const mergedCheckInsCount = backendCheckIns
-      ? backendCheckIns.length
-      : localCheckIns.length;
-
-    setTotalCheckIns(mergedCheckInsCount);
-    setPoints(userPoints);
-  }, [backendCheckIns]);
 
   const handleClearData = () => {
     deleteAccountMutation.mutate(null, {
@@ -164,7 +147,7 @@ export function Profile() {
               color: "text-emerald-600",
               bg: "bg-emerald-50",
               label: "Check-ins",
-              val: totalCheckIns,
+              val: profile?.totalCheckIns ?? 0,
             },
             {
               icon: Activity,
@@ -172,6 +155,7 @@ export function Profile() {
               bg: "bg-blue-50",
               label: "Current BMI",
               val: profile.bmi,
+              sub: profile.bmiCategory,
             },
             {
               icon: Heart,
@@ -185,7 +169,7 @@ export function Profile() {
               color: "text-yellow-600",
               bg: "bg-yellow-50",
               label: "Health XP",
-              val: points,
+              val: profile?.healthPoints ?? 0,
             },
           ].map((stat, i) => (
             <Card
@@ -201,6 +185,11 @@ export function Profile() {
                 <div className="text-3xl font-black text-gray-900">
                   {stat.val}
                 </div>
+                {stat.sub && (
+                  <div className="text-[10px] font-black text-blue-500 uppercase tracking-tight -mt-1">
+                    {stat.sub}
+                  </div>
+                )}
                 <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
                   {stat.label}
                 </div>
@@ -442,8 +431,8 @@ export function Profile() {
                   </AlertDialogTitle>
                   <AlertDialogDescription className="text-gray-500 font-medium text-base">
                     You are about to permanently purge your profile,{" "}
-                    {totalCheckIns} records, and all AI insights. This cannot be
-                    recovered.
+                    {profile?.totalCheckIns ?? 0} records, and all AI insights.
+                    This cannot be recovered.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="pt-6">
