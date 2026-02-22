@@ -21,6 +21,7 @@ import {
 import { saveUserProfile, calculateBMI, getUserAuth } from "../lib/storage";
 import { Heart, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useMe } from "../hooks/use-auth";
 
 const nigerianStates = [
   "Lagos",
@@ -64,6 +65,9 @@ const familyHistoryOptions = [
 ];
 
 export function Onboarding() {
+  const { data: user } = useMe();
+  console.log(user);
+
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({

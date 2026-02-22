@@ -40,6 +40,7 @@ import {
 import { toast } from "sonner";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
+import { useMe } from "../hooks/use-auth";
 
 const symptoms = [
   "None",
@@ -65,6 +66,9 @@ function calculateQuickScore(data) {
 }
 
 export function DailyCheckIn() {
+  const { data: user } = useMe();
+  console.log(user);
+
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [checkInData, setCheckInData] = useState({
