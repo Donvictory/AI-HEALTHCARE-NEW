@@ -2,6 +2,7 @@ import express from "express";
 import userRoutes from "../modules/user/user.route";
 import mediaRoutes from "../modules/media/media.route";
 import dailyCheckInRoutes from "../modules/daily-check-in/daily-check-in.route";
+import doctorRoutes from "../modules/doctor/doctor.route";
 
 const router = express.Router();
 
@@ -14,5 +15,6 @@ router.get("/health", (_, res) => {
 router.use("/users", userRoutes);
 router.use("/media", mediaRoutes);
 router.use("/daily-check-ins", dailyCheckInRoutes);
+router.use("/doctors", doctorRoutes);
 
 export default router;

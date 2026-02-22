@@ -153,6 +153,10 @@ const swaggerSpec: OpenAPIV3.Document = {
       description:
         "Daily health check-in — all 5 steps submitted in one request",
     },
+    {
+      name: "Doctors",
+      description: "Find doctors by location — state/city based search",
+    },
   ],
   paths: {
     // ─── Auth ──────────────────────────────────────────────────────
@@ -620,6 +624,292 @@ const swaggerSpec: OpenAPIV3.Document = {
         responses: {
           "200": { description: "Deleted" },
           "401": { description: "Unauthorized" },
+          "404": { description: "Not found" },
+        },
+      },
+    },
+
+    // ─── Doctors ───────────────────────────────────────────────────
+    "/api/v1/doctors": {
+      get: {
+        tags: ["Doctors"],
+        summary:
+          "Get all doctors (optional filters: state, city, specialty, isAvailable)",
+        security: [],
+        parameters: [
+          {
+            name: "state",
+            in: "query",
+            schema: { type: "string" },
+            description: "Filter by state",
+          },
+          {
+            name: "city",
+            in: "query",
+            schema: { type: "string" },
+            description: "Filter by city",
+          },
+          {
+            name: "specialty",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: [
+                "GENERAL_PRACTITIONER",
+                "CARDIOLOGIST",
+                "DERMATOLOGIST",
+                "ENDOCRINOLOGIST",
+                "GASTROENTEROLOGIST",
+                "NEUROLOGIST",
+                "OBSTETRICIAN_GYNECOLOGIST",
+                "ONCOLOGIST",
+                "OPHTHALMOLOGIST",
+                "ORTHOPEDIC_SURGEON",
+                "PEDIATRICIAN",
+                "PSYCHIATRIST",
+                "PULMONOLOGIST",
+                "RADIOLOGIST",
+                "RHEUMATOLOGIST",
+                "UROLOGIST",
+                "ENT_SPECIALIST",
+                "DENTIST",
+                "NUTRITIONIST",
+                "PHYSICAL_THERAPIST",
+                "OTHER",
+              ],
+            },
+          },
+          { name: "isAvailable", in: "query", schema: { type: "boolean" } },
+        ],
+        responses: {
+          "200": { description: "Doctors retrieved" },
+        },
+      },
+      post: {
+        tags: ["Doctors"],
+        summary: "Create a doctor (Admin only)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: [
+                  "name",
+                  "specialty",
+                  "hospitalOrClinic",
+                  "state",
+                  "city",
+                ],
+                properties: {
+                  name: { type: "string", example: "Dr. Adaeze Okafor" },
+                  email: { type: "string", format: "email" },
+                  phone: { type: "string", example: "+2348012345678" },
+                  specialty: {
+                    type: "string",
+                    enum: [
+                      "GENERAL_PRACTITIONER",
+                      "CARDIOLOGIST",
+                      "DERMATOLOGIST",
+                      "ENDOCRINOLOGIST",
+                      "GASTROENTEROLOGIST",
+                      "NEUROLOGIST",
+                      "OBSTETRICIAN_GYNECOLOGIST",
+                      "ONCOLOGIST",
+                      "OPHTHALMOLOGIST",
+                      "ORTHOPEDIC_SURGEON",
+                      "PEDIATRICIAN",
+                      "PSYCHIATRIST",
+                      "PULMONOLOGIST",
+                      "RADIOLOGIST",
+                      "RHEUMATOLOGIST",
+                      "UROLOGIST",
+                      "ENT_SPECIALIST",
+                      "DENTIST",
+                      "NUTRITIONIST",
+                      "PHYSICAL_THERAPIST",
+                      "OTHER",
+                    ],
+                    example: "CARDIOLOGIST",
+                  },
+                  hospitalOrClinic: {
+                    type: "string",
+                    example: "Lagos Island General Hospital",
+                  },
+                  bio: { type: "string" },
+                  state: { type: "string", example: "lagos" },
+                  city: { type: "string", example: "ikeja" },
+                  address: { type: "string" },
+                  yearsOfExperience: {
+                    type: "number",
+                    minimum: 0,
+                    example: 10,
+                  },
+                  consultationFee: {
+                    type: "number",
+                    minimum: 0,
+                    example: 15000,
+                  },
+                  rating: {
+                    type: "number",
+                    minimum: 0,
+                    maximum: 5,
+                    example: 4.8,
+                  },
+                  isAvailable: { type: "boolean", example: true },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Doctor created" },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden — Admin only" },
+        },
+      },
+    },
+    "/api/v1/doctors/nearby": {
+      get: {
+        tags: ["Doctors"],
+        summary:
+          "Find available doctors near you (based on your profile state/city)",
+        description:
+          "Returns doctors in your city first, then falls back to your state if no city-level matches are found. Requires your profile to have a `state` set.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "specialty",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: [
+                "GENERAL_PRACTITIONER",
+                "CARDIOLOGIST",
+                "DERMATOLOGIST",
+                "ENDOCRINOLOGIST",
+                "GASTROENTEROLOGIST",
+                "NEUROLOGIST",
+                "OBSTETRICIAN_GYNECOLOGIST",
+                "ONCOLOGIST",
+                "OPHTHALMOLOGIST",
+                "ORTHOPEDIC_SURGEON",
+                "PEDIATRICIAN",
+                "PSYCHIATRIST",
+                "PULMONOLOGIST",
+                "RADIOLOGIST",
+                "RHEUMATOLOGIST",
+                "UROLOGIST",
+                "ENT_SPECIALIST",
+                "DENTIST",
+                "NUTRITIONIST",
+                "PHYSICAL_THERAPIST",
+                "OTHER",
+              ],
+            },
+            description: "Optional specialty filter",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Nearby doctors retrieved",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    results: { type: "integer" },
+                    location: {
+                      type: "object",
+                      properties: {
+                        state: { type: "string" },
+                        city: { type: "string" },
+                      },
+                    },
+                    doctors: { type: "array", items: {} },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "State not set on your profile" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    "/api/v1/doctors/{id}": {
+      get: {
+        tags: ["Doctors"],
+        summary: "Get a specific doctor by ID",
+        security: [],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "Doctor retrieved" },
+          "404": { description: "Not found" },
+        },
+      },
+      patch: {
+        tags: ["Doctors"],
+        summary: "Update a doctor (Admin only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  specialty: { type: "string" },
+                  hospitalOrClinic: { type: "string" },
+                  state: { type: "string" },
+                  city: { type: "string" },
+                  isAvailable: { type: "boolean" },
+                  rating: { type: "number", minimum: 0, maximum: 5 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Updated" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "404": { description: "Not found" },
+        },
+      },
+      delete: {
+        tags: ["Doctors"],
+        summary: "Delete a doctor (Admin only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "Deleted" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
           "404": { description: "Not found" },
         },
       },
