@@ -1,0 +1,16 @@
+467a88c chore: resolve merge conflicts in AuthGuards.jsx
+930caa2 feat: Implement authentication guards, user dashboard, and profile page.
+client/src/Components/AuthGuards.jsx
+client/src/pages/Dashboard.jsx
+client/src/pages/Profile.jsx
+b37a018 Merge pull request #1 from Donvictory/secure-auth
+05cf60c Fixed authentication
+client/src/Components/AuthGuards.jsx
+client/src/Components/Layout.jsx
+client/src/Components/Navbar.jsx
+client/src/hooks/use-auth.js
+client/src/lib/storage.js
+client/src/pages/SignUp.jsx
+client/vercel.json
+server/src/modules/user/user.controller.ts
+a7e283e Merge branch 'main' of https://github.com/Donvictory/AI-HEALTHCARE-NEW into secure-auth

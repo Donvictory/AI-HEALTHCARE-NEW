@@ -1,22 +1,34 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { isAuthenticated, isOnboarded } from "../lib/storage";
+import { useMe } from "../hooks/use-auth";
+import { Loader2 } from "lucide-react";
 
 /**
- * ─── Simple ProtectedRoute ──────────────────────────────────────────────────────────
+ * ─── ProtectedRoute ──────────────────────────────────────────────────────────
  *
  * Guards pages that require an active session.
- * Uses a non-httpOnly hint cookie (is_logged_in) set by the server.
- * Does NOT fetch user details to keep navigation instant.
  */
 export function ProtectedRoute({ children }) {
   const location = useLocation();
+  const { data: user, isLoading } = useMe();
 
-  if (!isAuthenticated()) {
+  // 1. If Loading, show a spinner to avoid unauthorized flash
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+      </div>
+    );
+  }
+
+  // 2. If no user and no local session hint, redirect to login
+  if (!user && !isAuthenticated()) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Optional: Simple onboarding redirect if we have the hint
-  if (!isOnboarded() && location.pathname !== "/onboarding") {
+  // 3. If authenticated but not onboarded, force onboarding (unless already there)
+  const userIsOnboarded = user?.isOnboarded ?? isOnboarded();
+  if (!userIsOnboarded && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -24,16 +36,27 @@ export function ProtectedRoute({ children }) {
 }
 
 /**
- * ─── Simple OnboardingRoute ─────────────────────────────────────────────────────────
+ * ─── OnboardingRoute ─────────────────────────────────────────────────────────
  *
  * Accessible only to authenticated users who haven't onboarded yet.
  */
 export function OnboardingRoute({ children }) {
-  if (!isAuthenticated()) {
+  const { data: user, isLoading } = useMe();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user && !isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
 
-  if (isOnboarded()) {
+  const userIsOnboarded = user?.isOnboarded ?? isOnboarded();
+  if (userIsOnboarded) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -41,13 +64,19 @@ export function OnboardingRoute({ children }) {
 }
 
 /**
- * ─── Simple GuestRoute ──────────────────────────────────────────────────────────────
+ * ─── GuestRoute ──────────────────────────────────────────────────────────────
  *
  * Pages for unauthenticated users (Login, Signup).
  * Redirects to dashboard if already logged in.
  */
 export function GuestRoute({ children }) {
-  if (isAuthenticated()) {
+  const { data: user, isLoading } = useMe();
+
+  if (isLoading) {
+    return null; // Silent check
+  }
+
+  if (user || isAuthenticated()) {
     return <Navigate to="/dashboard" replace />;
   }
 
