@@ -6,6 +6,49 @@ import { appConfig } from "../../config/app.config";
 
 const userService = new UserService();
 
+// 7 days in milliseconds
+const REFRESH_TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+// 1 hour in milliseconds
+const ACCESS_TOKEN_COOKIE_MAX_AGE = 1 * 60 * 60 * 1000;
+
+const setAuthCookies = (
+  res: Response,
+  accessToken: string,
+  refreshToken: string,
+  isOnboarded: boolean = false,
+) => {
+  const isProd = appConfig.env === "production";
+  const cookieOptions: any = {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+  };
+
+  res.cookie("accessToken", accessToken, {
+    ...cookieOptions,
+    maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE,
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    ...cookieOptions,
+    maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+  });
+
+  // Client-side hint (not httpOnly) so JS can check if a session exists
+  res.cookie("is_logged_in", "true", {
+    ...cookieOptions,
+    httpOnly: false,
+    maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+  });
+
+  // Client-side hint for onboarding status
+  res.cookie("is_onboarded", String(isOnboarded), {
+    ...cookieOptions,
+    httpOnly: false,
+    maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+  });
+};
+
 export class UserController {
   // ─── Auth ──────────────────────────────────────────────────────────────────
 
@@ -14,12 +57,8 @@ export class UserController {
       const { user, accessToken, refreshToken } =
         await userService.registerUser(req.body);
       user.password = undefined;
-      sendSuccess(
-        res,
-        { accessToken, refreshToken, user },
-        "User registered successfully",
-        201,
-      );
+      setAuthCookies(res, accessToken, refreshToken, user.isOnboarded);
+      sendSuccess(res, { user }, "User registered successfully", 201);
     },
   );
 
@@ -29,18 +68,14 @@ export class UserController {
         req.body,
       );
       user.password = undefined;
-      sendSuccess(
-        res,
-        { accessToken, refreshToken, user },
-        "Login successful",
-        200,
-      );
+      setAuthCookies(res, accessToken, refreshToken, user.isOnboarded);
+      sendSuccess(res, { user }, "Login successful", 200);
     },
   );
 
   refreshToken = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const token = req.body?.refreshToken;
+      const token = req.cookies?.refreshToken || req.body?.refreshToken;
       if (!token) {
         return next(
           new (await import("../../utils/app-error.util")).AppError(
@@ -51,12 +86,30 @@ export class UserController {
       }
       const { accessToken } = await userService.refreshAccessToken(token);
 
-      sendSuccess(res, { accessToken }, "Access token refreshed", 200);
+      const isProd = appConfig.env === "production";
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+        maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE,
+      });
+
+      sendSuccess(res, null, "Access token refreshed", 200);
     },
   );
 
   logout = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
+      const isProd = appConfig.env === "production";
+      const cookieOptions: any = {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+      };
+      res.clearCookie("refreshToken", cookieOptions);
+      res.clearCookie("accessToken", cookieOptions);
+      res.clearCookie("is_logged_in", { ...cookieOptions, httpOnly: false });
+      res.clearCookie("is_onboarded", { ...cookieOptions, httpOnly: false });
       sendSuccess(res, null, "Logged out successfully", 200);
     },
   );
@@ -112,6 +165,16 @@ export class UserController {
         req.user.id,
         allowedUpdates,
       );
+
+      // Update the onboarding hint cookie
+      const isProd = appConfig.env === "production";
+      res.cookie("is_onboarded", "true", {
+        httpOnly: false,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+        maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+      });
+
       sendSuccess(
         res,
         { user: updatedUser },

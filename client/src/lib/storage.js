@@ -37,19 +37,51 @@ export const getRefreshToken = () =>
   localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
 export const clearTokens = () => {
+  // Remove any legacy localStorage copies
   localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+  // Also expire the client-visible hint cookies so guards instantly see the
+  // logged-out state without waiting for an API round-trip.
+  expireCookie("is_logged_in");
+  expireCookie("is_onboarded");
+};
+
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return null;
+};
+
+/**
+ * Expire a non-httpOnly cookie from JavaScript by setting its Max-Age to 0.
+ * (The server clears the httpOnly tokens via the /logout endpoint.)
+ */
+const expireCookie = (name) => {
+  const base = `${name}=; Max-Age=0; path=/;`;
+  document.cookie = `${base} SameSite=Lax`;
+  document.cookie = `${base} SameSite=None; Secure`;
+  document.cookie = `${base} SameSite=Strict`;
 };
 
 export const isAuthenticated = () => {
-  return !!getAccessToken();
+  // Check for the non-httpOnly hint cookie set by the server after login.
+  // This is the primary signal — no localStorage required.
+  return getCookie("is_logged_in") === "true";
+};
+
+export const isOnboarded = () => {
+  // Check for the non-httpOnly hint cookie set by the server.
+  return getCookie("is_onboarded") === "true";
 };
 
 export const logout = () => {
   localStorage.removeItem(STORAGE_KEYS.AUTH);
   localStorage.removeItem(STORAGE_KEYS.PROFILE);
-  clearTokens();
-  window.location.href = "/login";
+  clearTokens(); // clears localStorage + is_logged_in cookie
+  // NOTE: Navigation to /login is handled by the React Router auth guards
+  // after useLogout() clears the React Query 'me' cache. Avoid hard reloads
+  // here; they bypass the SPA router and reset all query caches.
 };
 
 // --- PROFILE & ONBOARDING ---

@@ -8,6 +8,7 @@ import {
   Calendar,
   Award,
   Info,
+  Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";

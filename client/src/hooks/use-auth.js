@@ -1,127 +1,76 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/api-client";
 import {
-  getUserProfile,
   getUserAuth,
   saveUserAuth,
-  saveTokens,
   clearTokens,
+  isAuthenticated,
 } from "../lib/storage";
+
+// ─── Register ──────────────────────────────────────────────────────────────────
 
 export const useRegister = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userData) => {
-      try {
-        const response = await apiClient.post("/users/register", userData);
-        return response.data;
-      } catch (error) {
-        // Fallback for Demo/Dev mode if backend is unreachable or failing
-        const isNetworkError = !error.response;
-        const isServerError = error.response?.status >= 500;
-
-        if (isNetworkError || isServerError) {
-          console.warn(
-            `Backend ${isNetworkError ? "unreachable" : "failing"}, using local storage fallback for registration.`,
-          );
-          return {
-            status: "success",
-            data: {
-              user: { ...userData, id: `local-${Date.now()}` },
-              accessToken: "demo-token",
-            },
-          };
-        }
-        throw error;
-      }
+      const response = await apiClient.post("/users/register", userData);
+      return response.data;
     },
     onSuccess: (data) => {
       const user = data.data?.user || data.user;
-      const { accessToken, refreshToken } = data.data || data;
-
+      // Tokens are already set as httpOnly cookies by the server.
+      // We only persist the user object locally for offline / cold-start reads.
       if (user) {
         saveUserAuth(user);
-        saveTokens(accessToken, refreshToken);
-        queryClient.invalidateQueries(["me"]);
+        queryClient.setQueryData(["me"], user);
       }
     },
   });
 };
+
+// ─── Login ─────────────────────────────────────────────────────────────────────
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (credentials) => {
-      try {
-        const response = await apiClient.post("/users/login", credentials);
-        return response.data;
-      } catch (error) {
-        // Fallback for Demo/Dev mode if backend is unreachable or failing
-        const isNetworkError = !error.response;
-        const isServerError = error.response?.status >= 500;
-
-        if (isNetworkError || isServerError) {
-          console.warn(
-            `Backend ${isNetworkError ? "unreachable" : "failing"}, using local storage fallback for login.`,
-          );
-          const localProfile = getUserProfile();
-          if (localProfile && localProfile.email === credentials.email) {
-            return {
-              status: "success",
-              data: { user: localProfile, accessToken: "demo-token" },
-            };
-          }
-          // If no local profile matches, still allow login for demo purposes with a generic user
-          return {
-            status: "success",
-            data: {
-              user: {
-                email: credentials.email,
-                name: "Demo User",
-                isFirstLogin: true,
-              },
-              accessToken: "demo-token",
-            },
-          };
-        }
-        throw error;
-      }
+      const response = await apiClient.post("/users/login", credentials);
+      return response.data;
     },
     onSuccess: (data) => {
       const user = data.data?.user || data.user;
-      const { accessToken, refreshToken } = data.data || data;
-
+      // Tokens are already set as httpOnly cookies by the server.
       if (user) {
         saveUserAuth(user);
-        saveTokens(accessToken, refreshToken);
-        queryClient.invalidateQueries(["me"]);
+        queryClient.setQueryData(["me"], user);
       }
     },
   });
 };
+
+// ─── "Who am I?" ───────────────────────────────────────────────────────────────
+//
+// This query is the source of truth for the currently authenticated user.
+// The auth guards (ProtectedRoute / GuestRoute) consume it.
 
 export const useMe = () => {
   return useQuery({
     queryKey: ["me"],
     queryFn: async () => {
       try {
-        console.log("useMe: calling /users/profile...");
         const response = await apiClient.get("/users/profile");
-        console.log("useMe raw response:", response.data);
-
         const data = response.data?.data;
         let backendUser =
           data?.user || (response.data?.user ? response.data : null);
 
-        // Final check: if /profile didn't return a user structure we expect, try /me
+        // Fallback: if /profile didn't return the expected shape, try /me
         if (!backendUser) {
-          console.log("useMe: /profile didn't return user, trying /me...");
           const meResponse = await apiClient.get("/users/me");
           backendUser = meResponse.data?.data?.user || meResponse.data?.user;
         }
 
         if (backendUser) {
-          console.log("useMe: final user identified", backendUser.email);
           const enrichedUser = {
             id: backendUser._id || backendUser.id,
             ...backendUser,
@@ -131,26 +80,28 @@ export const useMe = () => {
           return enrichedUser;
         }
 
-        console.log("useMe: no user in response, checking local storage...");
-        const localUser = getUserAuth();
-        return localUser;
+        // No backend user returned
+        return null;
       } catch (error) {
-        console.error(
-          "useMe exception:",
-          error.response?.status,
-          error.message,
-        );
         if (error.response?.status === 401) {
+          // Access token expired or missing — the interceptor will handle refresh.
+          // Return null so guards can redirect.
           clearTokens();
           return null;
         }
+        // Network / server errors: return null
         return null;
       }
     },
+    // Only run this query when the browser has the session hint cookie.
+    // This avoids an unnecessary 401 round-trip on first load for guests.
+    enabled: isAuthenticated(),
     retry: 1,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0, // Always verify session on mount/navigation
   });
 };
+
+// ─── Update Profile ────────────────────────────────────────────────────────────
 
 export const useUpdateMe = () => {
   const queryClient = useQueryClient();
@@ -160,23 +111,33 @@ export const useUpdateMe = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["me"]);
+      queryClient.invalidateQueries({ queryKey: ["me"] });
     },
   });
 };
 
+// ─── Logout ────────────────────────────────────────────────────────────────────
+
 export const useLogout = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   return useMutation({
     mutationFn: async () => {
+      // Ask the server to clear the httpOnly cookies
       await apiClient.post("/users/logout");
     },
     onSettled: () => {
+      // Clear the client-side hint cookie + legacy localStorage
       clearTokens();
+      // Wipe the React Query auth cache so all guards immediately redirect
       queryClient.setQueryData(["me"], null);
+      queryClient.removeQueries({ queryKey: ["me"] });
+      navigate("/login", { replace: true });
     },
   });
 };
+
+// ─── Onboard ───────────────────────────────────────────────────────────────────
 
 export const useOnboard = () => {
   const queryClient = useQueryClient();
@@ -186,10 +147,12 @@ export const useOnboard = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["me"]);
+      queryClient.invalidateQueries({ queryKey: ["me"] });
     },
   });
 };
+
+// ─── Delete Account ────────────────────────────────────────────────────────────
 
 export const useDeleteAccount = () => {
   const queryClient = useQueryClient();
@@ -199,6 +162,7 @@ export const useDeleteAccount = () => {
     },
     onSuccess: () => {
       localStorage.clear();
+      clearTokens();
       queryClient.setQueryData(["me"], null);
     },
   });
