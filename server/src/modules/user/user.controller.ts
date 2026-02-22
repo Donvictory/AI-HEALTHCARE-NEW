@@ -15,6 +15,7 @@ const setAuthCookies = (
   res: Response,
   accessToken: string,
   refreshToken: string,
+  isOnboarded: boolean = false,
 ) => {
   const isProd = appConfig.env === "production";
   const cookieOptions: any = {
@@ -39,6 +40,13 @@ const setAuthCookies = (
     httpOnly: false,
     maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
   });
+
+  // Client-side hint for onboarding status
+  res.cookie("is_onboarded", String(isOnboarded), {
+    ...cookieOptions,
+    httpOnly: false,
+    maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+  });
 };
 
 export class UserController {
@@ -49,13 +57,8 @@ export class UserController {
       const { user, accessToken, refreshToken } =
         await userService.registerUser(req.body);
       user.password = undefined;
-      setAuthCookies(res, accessToken, refreshToken);
-      sendSuccess(
-        res,
-        { accessToken, refreshToken, user },
-        "User registered successfully",
-        201,
-      );
+      setAuthCookies(res, accessToken, refreshToken, user.isOnboarded);
+      sendSuccess(res, { user }, "User registered successfully", 201);
     },
   );
 
@@ -65,13 +68,8 @@ export class UserController {
         req.body,
       );
       user.password = undefined;
-      setAuthCookies(res, accessToken, refreshToken);
-      sendSuccess(
-        res,
-        { accessToken, refreshToken, user },
-        "Login successful",
-        200,
-      );
+      setAuthCookies(res, accessToken, refreshToken, user.isOnboarded);
+      sendSuccess(res, { user }, "Login successful", 200);
     },
   );
 
@@ -96,7 +94,7 @@ export class UserController {
         maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE,
       });
 
-      sendSuccess(res, { accessToken }, "Access token refreshed", 200);
+      sendSuccess(res, null, "Access token refreshed", 200);
     },
   );
 
@@ -111,6 +109,7 @@ export class UserController {
       res.clearCookie("refreshToken", cookieOptions);
       res.clearCookie("accessToken", cookieOptions);
       res.clearCookie("is_logged_in", { ...cookieOptions, httpOnly: false });
+      res.clearCookie("is_onboarded", { ...cookieOptions, httpOnly: false });
       sendSuccess(res, null, "Logged out successfully", 200);
     },
   );
@@ -166,6 +165,16 @@ export class UserController {
         req.user.id,
         allowedUpdates,
       );
+
+      // Update the onboarding hint cookie
+      const isProd = appConfig.env === "production";
+      res.cookie("is_onboarded", "true", {
+        httpOnly: false,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+        maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
+      });
+
       sendSuccess(
         res,
         { user: updatedUser },

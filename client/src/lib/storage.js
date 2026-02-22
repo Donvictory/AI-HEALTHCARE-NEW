@@ -40,9 +40,10 @@ export const clearTokens = () => {
   // Remove any legacy localStorage copies
   localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-  // Also expire the client-visible hint cookie so guards instantly see the
+  // Also expire the client-visible hint cookies so guards instantly see the
   // logged-out state without waiting for an API round-trip.
   expireCookie("is_logged_in");
+  expireCookie("is_onboarded");
 };
 
 const getCookie = (name) => {
@@ -57,13 +58,21 @@ const getCookie = (name) => {
  * (The server clears the httpOnly tokens via the /logout endpoint.)
  */
 const expireCookie = (name) => {
-  document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
+  const base = `${name}=; Max-Age=0; path=/;`;
+  document.cookie = `${base} SameSite=Lax`;
+  document.cookie = `${base} SameSite=None; Secure`;
+  document.cookie = `${base} SameSite=Strict`;
 };
 
 export const isAuthenticated = () => {
   // Check for the non-httpOnly hint cookie set by the server after login.
   // This is the primary signal — no localStorage required.
   return getCookie("is_logged_in") === "true";
+};
+
+export const isOnboarded = () => {
+  // Check for the non-httpOnly hint cookie set by the server.
+  return getCookie("is_onboarded") === "true";
 };
 
 export const logout = () => {

@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../lib/api-client";
-import { getUserAuth, saveUserAuth, clearTokens } from "../lib/storage";
+import {
+  getUserAuth,
+  saveUserAuth,
+  clearTokens,
+  isAuthenticated,
+} from "../lib/storage";
 
 // ─── Register ──────────────────────────────────────────────────────────────────
 
@@ -75,8 +80,8 @@ export const useMe = () => {
           return enrichedUser;
         }
 
-        // No backend user returned — try the local cache as a last resort
-        return getUserAuth();
+        // No backend user returned
+        return null;
       } catch (error) {
         if (error.response?.status === 401) {
           // Access token expired or missing — the interceptor will handle refresh.
@@ -84,15 +89,15 @@ export const useMe = () => {
           clearTokens();
           return null;
         }
-        // Network / server errors: don't log out the user, just return null
+        // Network / server errors: return null
         return null;
       }
     },
     // Only run this query when the browser has the session hint cookie.
     // This avoids an unnecessary 401 round-trip on first load for guests.
-    enabled: true,
+    enabled: isAuthenticated(),
     retry: 1,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // Always verify session on mount/navigation
   });
 };
 
