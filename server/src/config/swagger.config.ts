@@ -164,6 +164,7 @@ const swaggerSpec: OpenAPIV3.Document = {
       description: "Health metrics overview, resilience tank & drift levels",
     },
     { name: "Cron", description: "Automated tasks (Daily reset, etc.)" },
+    { name: "Chat", description: "AI-assisted health chat" },
   ],
   paths: {
     // ─── Auth ──────────────────────────────────────────────────────
@@ -430,6 +431,34 @@ const swaggerSpec: OpenAPIV3.Document = {
         responses: {
           "200": { description: "Reset successful" },
           "401": { description: "Invalid secret" },
+        },
+      },
+    },
+
+    // ─── Chat ─────────────────────────────────────────────────────
+    "/api/v1/chat": {
+      post: {
+        tags: ["Chat"],
+        summary: "Ask the AI health assistant a question",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["message"],
+                properties: {
+                  message: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Chat response generated" },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
         },
       },
     },
