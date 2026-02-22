@@ -63,6 +63,13 @@ export class UserService {
     }
 
     const tokens = this.signTokenPair(user._id!.toString());
+
+    // If it's the first login, mark it as false in the DB for future logins,
+    // but keep it true in this response so the current session can proceed to onboarding.
+    if (user.isFirstLogin) {
+      await UserModel.findByIdAndUpdate(user._id, { isFirstLogin: false });
+    }
+
     return { user, ...tokens };
   }
 
