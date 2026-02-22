@@ -18,10 +18,10 @@ import {
   CardHeader,
   CardTitle,
 } from "../Components/ui/card";
-import { saveUserProfile, calculateBMI, getUserAuth } from "../lib/storage";
-import { Heart, Sparkles } from "lucide-react";
+import { saveUserProfile, calculateBMI } from "../lib/storage";
+import { Heart, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useMe } from "../hooks/use-auth";
+import { useMe, useUpdateMe } from "../hooks/use-auth";
 
 const nigerianStates = [
   "Lagos",
@@ -66,9 +66,9 @@ const familyHistoryOptions = [
 
 export function Onboarding() {
   const { data: user } = useMe();
-  console.log(user);
-
+  const updateMeMutation = useUpdateMe();
   const navigate = useNavigate();
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     age: "",
@@ -104,38 +104,41 @@ export function Onboarding() {
   };
 
   const handleComplete = () => {
-    const auth = getUserAuth();
     const bmi = calculateBMI(
       parseFloat(formData.weight),
       parseFloat(formData.height),
     );
 
-    const profile = {
-      name: auth?.name || "User",
-      email: auth?.email || "",
-      phone: formData.phone,
+    const payload = {
+      phoneNumber: formData.phone,
       age: parseInt(formData.age),
-      gender: formData.gender,
+      gender: formData.gender.toUpperCase(),
       height: parseFloat(formData.height),
       weight: parseFloat(formData.weight),
-      bmi,
       city: formData.city,
       state: formData.state,
-      knownConditions: formData.knownConditions.filter((c) => c !== "None"),
-      familyHistory: formData.familyHistory.filter((h) => h !== "None"),
-      points: 0,
-      createdAt: new Date().toISOString(),
+      healthConditions: formData.knownConditions.filter((c) => c !== "None"),
+      familyHealthHistory: formData.familyHistory.filter((h) => h !== "None"),
+      isFirstLogin: false,
     };
 
-    saveUserProfile(profile);
-    toast.success("Welcome to DriftCare! 🎉");
-    navigate("/check-in");
+    updateMeMutation.mutate(payload, {
+      onSuccess: (data) => {
+        saveUserProfile({ ...data.data.user, bmi });
+        toast.success("Welcome to DriftCare! 🎉");
+        navigate("/dashboard");
+      },
+      onError: (error) => {
+        toast.error(
+          error.response?.data?.message || "Failed to save profile. Try again.",
+        );
+      },
+    });
   };
 
   const toggleCondition = (condition) => {
     setFormData((prev) => {
       let newConditions = [...prev.knownConditions];
-
       if (condition === "None") {
         newConditions = ["None"];
       } else {
@@ -145,11 +148,8 @@ export function Onboarding() {
         } else {
           newConditions.push(condition);
         }
-        if (newConditions.length === 0) {
-          newConditions = ["None"];
-        }
+        if (newConditions.length === 0) newConditions = ["None"];
       }
-
       return { ...prev, knownConditions: newConditions };
     });
   };
@@ -157,7 +157,6 @@ export function Onboarding() {
   const toggleFamilyHistory = (item) => {
     setFormData((prev) => {
       let newHistory = [...prev.familyHistory];
-
       if (item === "None") {
         newHistory = ["None"];
       } else {
@@ -167,11 +166,8 @@ export function Onboarding() {
         } else {
           newHistory.push(item);
         }
-        if (newHistory.length === 0) {
-          newHistory = ["None"];
-        }
+        if (newHistory.length === 0) newHistory = ["None"];
       }
-
       return { ...prev, familyHistory: newHistory };
     });
   };
@@ -197,7 +193,6 @@ export function Onboarding() {
         </CardHeader>
 
         <CardContent>
-          {/* Step 1: Basic Info */}
           {step === 1 && (
             <div className="space-y-4">
               <div className="text-center mb-4">
@@ -271,7 +266,6 @@ export function Onboarding() {
             </div>
           )}
 
-          {/* Step 2: Location */}
           {step === 2 && (
             <div className="space-y-4">
               <div className="text-center mb-4">
@@ -311,9 +305,6 @@ export function Onboarding() {
                     setFormData({ ...formData, city: e.target.value })
                   }
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  We use this to provide local context (traffic, heat, etc.)
-                </p>
               </div>
 
               <div>
@@ -344,7 +335,6 @@ export function Onboarding() {
             </div>
           )}
 
-          {/* Step 3: Health History */}
           {step === 3 && (
             <div className="space-y-4">
               <div className="text-center mb-4">
@@ -355,10 +345,7 @@ export function Onboarding() {
 
               <div>
                 <Label>Any known health conditions?</Label>
-                <p className="text-xs text-gray-500 mb-2">
-                  Select all that apply
-                </p>
-                <div className="space-y-2">
+                <div className="space-y-2 mt-2">
                   {commonConditions.map((condition) => (
                     <div key={condition} className="flex items-center gap-2">
                       <Checkbox
@@ -376,10 +363,7 @@ export function Onboarding() {
 
               <div>
                 <Label>Family health history?</Label>
-                <p className="text-xs text-gray-500 mb-2">
-                  Anyone in your family have these?
-                </p>
-                <div className="space-y-2">
+                <div className="space-y-2 mt-2">
                   {familyHistoryOptions.map((item) => (
                     <div key={item} className="flex items-center gap-2">
                       <Checkbox
@@ -406,7 +390,14 @@ export function Onboarding() {
                 >
                   Back
                 </Button>
-                <Button onClick={handleComplete} className="flex-1">
+                <Button
+                  onClick={handleComplete}
+                  className="flex-1"
+                  disabled={updateMeMutation.isPending}
+                >
+                  {updateMeMutation.isPending ? (
+                    <Loader2 className="animate-spin w-4 h-4 mr-2" />
+                  ) : null}
                   Let's Go! 🚀
                 </Button>
               </div>

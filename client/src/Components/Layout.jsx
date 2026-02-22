@@ -1,45 +1,49 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import {
-  isAuthenticated,
-  hasCompletedOnboarding,
-  getTodaysCheckIn,
-} from "../lib/storage";
+import { useMe } from "../hooks/use-auth";
+import { isAuthenticated as checkToken } from "../lib/storage";
 
-import { Heart, Home, User, Stethoscope, Bot } from "lucide-react";
+import { Heart, Home, User, Stethoscope, Bot, Loader2 } from "lucide-react";
 
 import { Navbar } from "./Navbar";
 
 export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { data: user, isLoading, isError } = useMe();
 
-  const authenticated = isAuthenticated();
-  const onboarded = hasCompletedOnboarding();
-  const todayCheckIn = getTodaysCheckIn();
-
-  const publicRoutes = ["/", "/login", "/signup"];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+  const isPublicRoute = ["/", "/login", "/signup"].includes(location.pathname);
 
   useEffect(() => {
-    if (!authenticated && !isPublicRoute) {
-      navigate("/login");
-    } else if (
-      authenticated &&
-      !onboarded &&
-      location.pathname !== "/onboarding"
-    ) {
-      navigate("/onboarding");
-    } else if (
-      authenticated &&
-      onboarded &&
-      (location.pathname === "/login" || location.pathname === "/signup")
-    ) {
-      // Only redirect to dashboard if they are trying to access login/signup while already logged in
-      navigate("/dashboard");
-    }
-  }, [navigate, location.pathname, authenticated, onboarded, isPublicRoute]);
+    if (isLoading) return;
 
+    if (!user && !isPublicRoute) {
+      navigate("/login");
+    } else if (user) {
+      // Use isFirstLogin from backend to redirect to onboarding
+      if (user.isFirstLogin && location.pathname !== "/onboarding") {
+        navigate("/onboarding");
+      }
+      // If they are on login/signup but already logged in and finished onboarding
+      else if (
+        !user.isFirstLogin &&
+        (location.pathname === "/login" || location.pathname === "/signup")
+      ) {
+        navigate("/dashboard");
+      }
+    }
+  }, [navigate, location.pathname, user, isLoading, isPublicRoute]);
+
+  if (isLoading && !isPublicRoute) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+      </div>
+    );
+  }
+
+  const authenticated = !!user;
+  const onboarded = user ? !user.isFirstLogin : false;
   const showNav = authenticated && onboarded && !isPublicRoute;
 
   return (

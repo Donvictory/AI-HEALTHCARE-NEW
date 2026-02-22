@@ -14,7 +14,6 @@ const STORAGE_KEYS = {
 
 // --- AUTHENTICATION ---
 export const saveUserAuth = (userData) => {
-  localStorage.setItem("token", userData.token);
   localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userData));
 };
 
@@ -24,11 +23,12 @@ export const getUserAuth = () => {
 };
 
 export const isAuthenticated = () => {
-  return !!localStorage.getItem("token");
+  // This is now handled by the useMe hook + cookies
+  // Returning false by default to encourage hook usage
+  return false;
 };
 
 export const logout = () => {
-  localStorage.removeItem("token");
   localStorage.removeItem(STORAGE_KEYS.AUTH);
   localStorage.removeItem(STORAGE_KEYS.PROFILE);
   window.location.href = "/login";

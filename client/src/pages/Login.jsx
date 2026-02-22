@@ -28,10 +28,10 @@ export function Login() {
       onSuccess: (data) => {
         toast.success(`Welcome back! 🎉`);
         // The token is handled in the hook's onSuccess
-        if (data.data.user.age) {
-          navigate("/dashboard");
-        } else {
+        if (data.data.user.isFirstLogin) {
           navigate("/onboarding");
+        } else {
+          navigate("/dashboard");
         }
       },
       onError: (error) => {
