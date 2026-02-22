@@ -29,7 +29,9 @@ export function Login() {
         toast.success(`Welcome back! 🎉`);
         // Use isOnboarded flag for routing
         const user = data.data?.user || data.user;
+
         if (!user?.isOnboarded) {
+          console.log("is not onboarded");
           navigate("/onboarding");
         } else {
           navigate("/dashboard");
