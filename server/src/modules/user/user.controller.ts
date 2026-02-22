@@ -15,10 +15,11 @@ const setAuthCookies = (
   accessToken: string,
   refreshToken: string,
 ) => {
+  const isProd = appConfig.env === "production";
   const cookieOptions: any = {
     httpOnly: true,
-    secure: true, // Always true for cross-site cookies
-    sameSite: "none", // Required for cross-site (vercel frontend -> vercel backend)
+    secure: isProd, // Disable secure flag on localhost http
+    sameSite: isProd ? "none" : "lax", // Lax is more compatible with localhost developmental ports
   };
 
   res.cookie("accessToken", accessToken, {
@@ -76,10 +77,11 @@ export class UserController {
       const { accessToken } = await userService.refreshAccessToken(token);
 
       // Set new access token in cookie
+      const isProd = appConfig.env === "production";
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none",
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
         maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE,
       });
 
@@ -89,10 +91,11 @@ export class UserController {
 
   logout = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
+      const isProd = appConfig.env === "production";
       const cookieOptions: any = {
         httpOnly: true,
-        secure: true,
-        sameSite: "none",
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
       };
       res.clearCookie("refreshToken", cookieOptions);
       res.clearCookie("accessToken", cookieOptions);
