@@ -14,6 +14,7 @@ const STORAGE_KEYS = {
 
 // --- AUTHENTICATION ---
 export const saveUserAuth = (userData) => {
+  localStorage.setItem("token", userData.token);
   localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userData));
 };
 
@@ -23,11 +24,13 @@ export const getUserAuth = () => {
 };
 
 export const isAuthenticated = () => {
-  return !!getUserAuth();
+  return !!localStorage.getItem("token");
 };
 
 export const logout = () => {
+  localStorage.removeItem("token");
   localStorage.removeItem(STORAGE_KEYS.AUTH);
+  localStorage.removeItem(STORAGE_KEYS.PROFILE);
   window.location.href = "/login";
 };
 
@@ -38,21 +41,15 @@ export const saveUserProfile = (profile) => {
 
 export const getUserProfile = () => {
   const data = localStorage.getItem(STORAGE_KEYS.PROFILE);
-  return data
-    ? JSON.parse(data)
-    : {
-        name: "User",
-        age: "",
-        gender: "",
-        weight: "",
-        height: "",
-        conditions: [],
-      };
+  if (data) return JSON.parse(data);
+  return null;
 };
 
 export const hasCompletedOnboarding = () => {
   const profile = getUserProfile();
-  return !!(profile && profile.name && profile.gender);
+  // If we have a backend token but no local profile yet, we might still be onboarded
+  // This is a temporary bridge until all components use React Query
+  return !!(profile && profile.age);
 };
 
 export const calculateBMI = (weight, height) => {
