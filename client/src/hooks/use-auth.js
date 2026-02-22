@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../lib/api-client";
-import { getUserProfile } from "../lib/storage";
-
-import { saveUserAuth } from "../lib/storage";
+import { getUserProfile, getUserAuth, saveUserAuth } from "../lib/storage";
 
 export const useRegister = () => {
   const queryClient = useQueryClient();
@@ -98,20 +96,45 @@ export const useMe = () => {
       try {
         const response = await apiClient.get("/users/me");
 
-        console.log(response.data);
         // Our API structure: { status: 'success', data: { user: ... } }
         const backendUser = response.data?.data?.user || response.data?.user;
 
         if (backendUser) {
+          // Keep localStorage in sync with backend
+          saveUserAuth(backendUser);
           return backendUser;
+        }
+
+        // Backend returned no user — try localStorage fallback
+        const localUser = getUserAuth();
+        if (localUser) {
+          console.warn(
+            "Backend returned no user, using localStorage fallback.",
+          );
+          return localUser;
         }
 
         return null;
       } catch (error) {
+        // On 401, check if we have a locally saved session (e.g. demo/offline mode)
         if (error.response?.status === 401) {
+          const localUser = getUserAuth();
+          if (localUser) {
+            console.warn("Backend returned 401, using localStorage fallback.");
+            return localUser;
+          }
           return null;
         }
-        console.error("Backend profile fetch failed", error);
+
+        // Network error or server error — fall back to localStorage
+        console.warn(
+          "Backend profile fetch failed, using localStorage fallback.",
+          error.message,
+        );
+        const localUser = getUserAuth();
+        if (localUser) {
+          return localUser;
+        }
         return null;
       }
     },
