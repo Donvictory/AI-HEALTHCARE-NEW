@@ -38,12 +38,13 @@ import {
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   Area,
   AreaChart,
@@ -55,10 +56,15 @@ import {
 } from "recharts";
 
 import { useMe } from "../hooks/use-auth";
+import { useDailyCheckIns, useTodayCheckIn } from "../hooks/use-daily-check-in";
 
 export function Dashboard() {
   const navigate = useNavigate();
   const { data: profile, isLoading: isProfileLoading } = useMe();
+  const { data: backendCheckIns, isLoading: isCheckInsLoading } =
+    useDailyCheckIns();
+  const { data: backendTodayCheckIn } = useTodayCheckIn();
+
   const [checkIns, setCheckIns] = useState([]);
   const [todayCheckIn, setTodayCheckIn] = useState(null);
   const [driftResult, setDriftResult] = useState(null);
@@ -66,18 +72,33 @@ export function Dashboard() {
   const [healthTasks, setHealthTasks] = useState([]);
 
   useEffect(() => {
-    const last7Days = getCheckInsLast7Days();
-    const today = getTodaysCheckIn();
+    // 1. Get Local Fallbacks
+    const localLast7Days = getCheckInsLast7Days();
+    const localToday = getTodaysCheckIn();
     const userPoints = getPoints();
     const tasks = getHealthTasks();
 
-    setCheckIns(last7Days);
-    setTodayCheckIn(today);
+    // 2. Merge with Backend (Backend takes priority)
+    const mergedCheckIns = backendCheckIns || localLast7Days;
+    const mergedToday = backendTodayCheckIn || localToday;
+
+    // Normalizing backend data to match frontend expectations if needed
+    const normalizedCheckIns = mergedCheckIns.map((c) => ({
+      ...c,
+      // Map backend currentMood (1-10) to frontend mood if keys differ
+      mood: c.currentMood || c.mood,
+      physicalActivity: c.dailyActivityMeasure || c.physicalActivity,
+      waterIntake: c.numOfWaterGlasses || c.waterIntake,
+      date: c.createdAt || c.date,
+    }));
+
+    setCheckIns(normalizedCheckIns);
+    setTodayCheckIn(mergedToday);
     setPoints(userPoints);
     setHealthTasks(tasks);
 
-    if (last7Days.length > 0) {
-      const result = detectDrift(last7Days, profile);
+    if (normalizedCheckIns.length > 0) {
+      const result = detectDrift(normalizedCheckIns, profile);
       setDriftResult(result);
     } else {
       setDriftResult({
@@ -87,9 +108,11 @@ export function Dashboard() {
         insights: [],
       });
     }
-  }, [profile]);
+  }, [profile, backendCheckIns, backendTodayCheckIn]);
 
-  if (isProfileLoading) {
+  const isLoading = isProfileLoading || isCheckInsLoading;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-4">
@@ -346,7 +369,7 @@ export function Dashboard() {
             </div>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] opacity-50 mb-2">
-                AI Health Insight
+                Companion
               </p>
               <AlertDescription className="text-lg font-bold leading-relaxed">
                 {contextMessage}
@@ -418,12 +441,16 @@ export function Dashboard() {
               <div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-emerald-600" />
-                  <CardTitle className="text-xl">Biometric Trends</CardTitle>
+                  <CardTitle className="text-xl">
+                    Daily Check-in Trends
+                  </CardTitle>
                 </div>
-                <CardDescription>Heart Rate & Resilience</CardDescription>
+                <CardDescription>
+                  Resilience & Stress (Past 7 Days)
+                </CardDescription>
               </div>
-              <div className="bg-blue-50 text-blue-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                Longitudinal View
+              <div className="bg-emerald-50 text-emerald-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                Trend Analysis
               </div>
             </div>
           </CardHeader>
@@ -431,7 +458,7 @@ export function Dashboard() {
             {checkIns.length > 0 ? (
               <div className="h-[300px] w-full mt-4">
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart
+                  <BarChart
                     data={chartData}
                     margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                   >
@@ -454,6 +481,7 @@ export function Dashboard() {
                       tick={{ fontSize: 11, fill: "#94a3b8", fontWeight: 600 }}
                     />
                     <Tooltip
+                      cursor={{ fill: "#f8fafc" }}
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           return (
@@ -464,13 +492,13 @@ export function Dashboard() {
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between gap-6">
                                   <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                    <div className="w-2 h-2 rounded-full bg-orange-500" />
                                     <span className="text-xs font-bold text-gray-600">
-                                      Heart Rate
+                                      Stress Level
                                     </span>
                                   </div>
                                   <span className="text-xs font-black text-gray-900">
-                                    {payload[0].payload.bpm} BPM
+                                    {payload[0].payload.stress}%
                                   </span>
                                 </div>
                                 <div className="flex items-center justify-between gap-6">
@@ -491,35 +519,31 @@ export function Dashboard() {
                         return null;
                       }}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="bpm"
-                      name="Heart Rate"
-                      stroke="#3b82f6"
-                      strokeWidth={4}
-                      dot={{
-                        r: 6,
-                        fill: "#3b82f6",
-                        stroke: "#fff",
-                        strokeWidth: 3,
+                    <Legend
+                      verticalAlign="top"
+                      align="right"
+                      iconType="circle"
+                      wrapperStyle={{
+                        paddingBottom: "20px",
+                        fontSize: "12px",
+                        fontWeight: "bold",
                       }}
-                      activeDot={{ r: 8, strokeWidth: 0 }}
                     />
-                    <Line
-                      type="monotone"
+                    <Bar
                       dataKey="resilience"
                       name="Resilience"
-                      stroke="#10b981"
-                      strokeWidth={4}
-                      dot={{
-                        r: 6,
-                        fill: "#10b981",
-                        stroke: "#fff",
-                        strokeWidth: 3,
-                      }}
-                      activeDot={{ r: 8, strokeWidth: 0 }}
+                      fill="#10b981"
+                      radius={[6, 6, 0, 0]}
+                      barSize={24}
                     />
-                  </LineChart>
+                    <Bar
+                      dataKey="stress"
+                      name="Stress"
+                      fill="#f97316"
+                      radius={[6, 6, 0, 0]}
+                      barSize={24}
+                    />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             ) : (

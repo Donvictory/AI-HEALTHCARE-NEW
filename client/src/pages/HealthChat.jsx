@@ -261,7 +261,7 @@ export function HealthChat() {
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-50 inline-block max-w-sm">
                   <Bot className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
                   <h2 className="font-semibold text-lg text-gray-900">
-                    Hello! I'm your AI health companion.
+                    Hello! I'm your Companion.
                   </h2>
                   <p className="text-sm text-gray-500 mt-2">
                     I can help answer questions about common symptoms, explain

@@ -44,17 +44,30 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMe } from "../hooks/use-auth";
+import { useCreateDailyCheckIn } from "../hooks/use-daily-check-in";
+import { useUploadMedia } from "../hooks/use-media";
 
 const symptoms = [
-  "None",
-  "Fever",
-  "Headache",
-  "Fatigue",
-  "Cough",
-  "Chest Pain",
-  "Dizziness",
-  "Body Aches",
+  "NONE",
+  "FEVER",
+  "HEADACHE",
+  "FATIGUE",
+  "COUGH",
+  "CHEST_PAIN",
+  "DIZZINESS",
+  "BODY_ACHES",
 ];
+
+const symptomLabels = {
+  NONE: "None",
+  FEVER: "Fever",
+  HEADACHE: "Headache",
+  FATIGUE: "Fatigue",
+  COUGH: "Cough",
+  CHEST_PAIN: "Chest Pain",
+  DIZZINESS: "Dizziness",
+  BODY_ACHES: "Body Aches",
+};
 
 // Quick resilience calculation
 function calculateQuickScore(data) {
@@ -73,6 +86,8 @@ export function DailyCheckIn() {
   console.log(user);
 
   const navigate = useNavigate();
+  const checkInMutation = useCreateDailyCheckIn();
+  const uploadMutation = useUploadMedia();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkInData, setCheckInData] = useState({
@@ -81,11 +96,11 @@ export function DailyCheckIn() {
     mood: 7,
     physicalActivity: 0,
     waterIntake: 6,
-    symptoms: ["None"],
+    symptoms: ["NONE"],
     drinkAlcohol: false,
     smokedToday: false,
     journal: "",
-    healthStatus: "",
+    healthStatus: "GOOD",
     reportNotes: "",
   });
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -119,62 +134,78 @@ export function DailyCheckIn() {
     const today = new Date().toISOString().split("T")[0];
     const resilienceScore = calculateQuickScore(checkInData);
 
-    // Artificial delay for professional feedback
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // 1. Handle File Upload if exists
+      let medicalReportUrls = [];
+      if (uploadedFile) {
+        toast.loading("Uploading medical report...");
+        const uploadResponse = await uploadMutation.mutateAsync(uploadedFile);
+        if (uploadResponse.status === "success") {
+          medicalReportUrls.push(uploadResponse.data.url);
+        }
+      }
 
-    const checkIn = {
-      id: `checkin-${Date.now()}`,
-      date: today,
-      hoursSlept: checkInData.hoursSlept,
-      stressLevel: checkInData.stressLevel,
-      mood: checkInData.mood,
-      physicalActivity: checkInData.physicalActivity,
-      waterIntake: checkInData.waterIntake,
-      symptoms: checkInData.symptoms,
-      journal: checkInData.journal,
-      drinkAlcohol: checkInData.drinkAlcohol,
-      smokedToday: checkInData.smokedToday,
-      resilienceScore,
-    };
+      // 2. Prepare payload for backend
+      const symptomsToday = checkInData.symptoms.filter((s) => s !== "NONE");
+      const lifestyleChecks = [];
+      if (checkInData.drinkAlcohol) lifestyleChecks.push("DRANK_LAST_NIGHT");
+      if (checkInData.smokedToday) lifestyleChecks.push("SMOKED_TODAY");
 
-    if (uploadedFile) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const fileData = e.target?.result;
-        const report = {
-          id: `report-${Date.now()}`,
-          fileName: uploadedFile.name,
-          fileData,
-          uploadDate: today,
-          notes: checkInData.reportNotes,
-        };
-        saveMedicalReport(report);
+      const payload = {
+        hoursSlept: checkInData.hoursSlept,
+        stressLevel: checkInData.stressLevel,
+        currentMood: checkInData.mood,
+        dailyActivityMeasure: checkInData.physicalActivity,
+        numOfWaterGlasses: checkInData.waterIntake,
+        currentHealthStatus: checkInData.healthStatus.toUpperCase(),
+        symptomsToday,
+        lifestyleChecks,
+        anythingElse: checkInData.journal,
+        feelingAboutReport: checkInData.reportNotes,
+        medicalReports: medicalReportUrls, // Include the server-side URLs
       };
-      reader.readAsDataURL(uploadedFile);
+
+      // 3. Submit to backend
+      await checkInMutation.mutateAsync(payload);
+
+      // 4. Local persistence for offline/legacy support
+      const checkInLocal = {
+        id: `checkin-${Date.now()}`,
+        date: today,
+        ...checkInData,
+        resilienceScore,
+        medicalReports: medicalReportUrls,
+      };
+
+      saveDailyCheckIn(checkInLocal);
+      addPoints(15);
+
+      toast.success("Check-in complete! You earned 15 points! 🎉");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Check-in submission failed:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to sync check-in with server.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    saveDailyCheckIn(checkIn);
-    addPoints(15);
-
-    setIsSubmitting(false);
-    toast.success("Check-in complete! You earned 15 points! 🎉");
-    navigate("/dashboard");
   };
 
   const toggleSymptom = (symptom) => {
     setCheckInData((prev) => {
       let newSymptoms = [...prev.symptoms];
-      if (symptom === "None") {
-        newSymptoms = ["None"];
+      if (symptom === "NONE") {
+        newSymptoms = ["NONE"];
       } else {
-        newSymptoms = newSymptoms.filter((s) => s !== "None");
+        newSymptoms = newSymptoms.filter((s) => s !== "NONE");
         if (newSymptoms.includes(symptom)) {
           newSymptoms = newSymptoms.filter((s) => s !== symptom);
         } else {
           newSymptoms.push(symptom);
         }
         if (newSymptoms.length === 0) {
-          newSymptoms = ["None"];
+          newSymptoms = ["NONE"];
         }
       }
       return { ...prev, symptoms: newSymptoms };
@@ -459,7 +490,7 @@ export function DailyCheckIn() {
                         onClick={handleNext}
                         className="flex-[2] h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
                       >
-                        Pathology <ChevronRight className="ml-2 w-5 h-5" />
+                        Next <ChevronRight className="ml-2 w-5 h-5" />
                       </Button>
                     </div>
                   </div>
@@ -492,20 +523,14 @@ export function DailyCheckIn() {
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                           <SelectContent className="rounded-xl border-none shadow-2xl">
-                            <SelectItem value="excellent">
+                            <SelectItem value="EXCELLENT">
                               Excellent - Feeling great!
                             </SelectItem>
-                            <SelectItem value="good">
+                            <SelectItem value="GOOD">
                               Good - Normal, no issues
                             </SelectItem>
-                            <SelectItem value="fair">
+                            <SelectItem value="FAIR">
                               Fair - Some minor concerns
-                            </SelectItem>
-                            <SelectItem value="poor">
-                              Poor - Not feeling well
-                            </SelectItem>
-                            <SelectItem value="very-poor">
-                              Very Poor - Need medical attention
                             </SelectItem>
                           </SelectContent>
                         </Select>
@@ -542,7 +567,7 @@ export function DailyCheckIn() {
                                 htmlFor={symptom}
                                 className="cursor-pointer font-bold text-sm"
                               >
-                                {symptom}
+                                {symptomLabels[symptom]}
                               </Label>
                             </div>
                           ))}
@@ -562,7 +587,7 @@ export function DailyCheckIn() {
                         onClick={handleNext}
                         className="flex-[2] h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
                       >
-                        Evidence <ChevronRight className="ml-2 w-5 h-5" />
+                        Next <ChevronRight className="ml-2 w-5 h-5" />
                       </Button>
                     </div>
                   </div>
@@ -652,7 +677,7 @@ export function DailyCheckIn() {
                         onClick={handleNext}
                         className="flex-[2] h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
                       >
-                        Reflection <ChevronRight className="ml-2 w-5 h-5" />
+                        Next <ChevronRight className="ml-2 w-5 h-5" />
                       </Button>
                     </div>
                   </div>
@@ -773,7 +798,7 @@ export function DailyCheckIn() {
                             <span>Processing...</span>
                           </>
                         ) : (
-                          <>Commit Vitals ✨</>
+                          <>Submit ✨</>
                         )}
                       </Button>
                     </div>

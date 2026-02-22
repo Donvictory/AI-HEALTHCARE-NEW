@@ -48,21 +48,30 @@ import {
 import { motion } from "framer-motion";
 
 import { useMe, useLogout, useDeleteAccount } from "../hooks/use-auth";
+import { useDailyCheckIns } from "../hooks/use-daily-check-in";
 
 export function Profile() {
   const navigate = useNavigate();
   const { data: profile, isLoading: isProfileLoading } = useMe();
+  const { data: backendCheckIns } = useDailyCheckIns();
   const logoutMutation = useLogout();
   const deleteAccountMutation = useDeleteAccount();
   const [totalCheckIns, setTotalCheckIns] = useState(0);
   const [points, setPoints] = useState(0);
 
   useEffect(() => {
-    const checkIns = getDailyCheckIns();
+    // 1. Get Local Fallbacks
+    const localCheckIns = getDailyCheckIns();
     const userPoints = getPoints();
-    setTotalCheckIns(checkIns.length);
+
+    // 2. Merge with Backend
+    const mergedCheckInsCount = backendCheckIns
+      ? backendCheckIns.length
+      : localCheckIns.length;
+
+    setTotalCheckIns(mergedCheckInsCount);
     setPoints(userPoints);
-  }, []);
+  }, [backendCheckIns]);
 
   const handleClearData = () => {
     deleteAccountMutation.mutate(null, {

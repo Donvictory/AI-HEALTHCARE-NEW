@@ -163,9 +163,8 @@ export const getChatMessages = () => {
     ? JSON.parse(data)
     : [
         {
-          role: "bot",
-          content:
-            "Hello! I am your AI Health Assistant. How can I help you today?",
+          role: "assistant",
+          content: "Hello! I am your Companion. How can I help you today?",
           timestamp: new Date().toISOString(),
         },
       ];
