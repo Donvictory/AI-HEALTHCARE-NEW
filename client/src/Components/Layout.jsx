@@ -1,51 +1,35 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import {
-  isAuthenticated,
-  hasCompletedOnboarding,
-  getTodaysCheckIn,
-} from "../lib/storage";
+import { useMe } from "../hooks/use-auth";
 
-import { Heart, Home, User, Stethoscope, Bot } from "lucide-react";
+import { Heart, Home, User, Stethoscope, Bot, Loader2 } from "lucide-react";
 
 import { Navbar } from "./Navbar";
 
 export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { data: user, isLoading } = useMe();
 
-  const authenticated = isAuthenticated();
-  const onboarded = hasCompletedOnboarding();
-  const todayCheckIn = getTodaysCheckIn();
+  const isPublicRoute = ["/", "/login", "/signup"].includes(location.pathname);
 
-  const publicRoutes = ["/", "/login", "/signup"];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+  if (isLoading && !isPublicRoute) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (!authenticated && !isPublicRoute) {
-      navigate("/login");
-    } else if (
-      authenticated &&
-      !onboarded &&
-      location.pathname !== "/onboarding"
-    ) {
-      navigate("/onboarding");
-    } else if (
-      authenticated &&
-      onboarded &&
-      (location.pathname === "/login" || location.pathname === "/signup")
-    ) {
-      // Only redirect to dashboard if they are trying to access login/signup while already logged in
-      navigate("/dashboard");
-    }
-  }, [navigate, location.pathname, authenticated, onboarded, isPublicRoute]);
-
+  const authenticated = !!user;
+  const onboarded = user ? !user.isFirstLogin : false;
+  // Navigation only shows for logged-in users who finished onboarding and aren't on the landing page
   const showNav = authenticated && onboarded && !isPublicRoute;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50">
+    <div className="min-h-screen bg-linear-to-br from-emerald-50 via-white to-blue-50">
       {showNav && <Navbar />}
-      <main className={showNav ? "pt-24" : ""}>
+      <main className={showNav ? "pt-24 pb-20" : ""}>
         <Outlet />
       </main>
 

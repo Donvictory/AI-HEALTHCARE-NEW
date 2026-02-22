@@ -7,12 +7,27 @@ const userService = new UserService();
 
 // 7 days in milliseconds
 const REFRESH_TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+// 1 hour in milliseconds
+const ACCESS_TOKEN_COOKIE_MAX_AGE = 1 * 60 * 60 * 1000;
 
-const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
-  res.cookie("refreshToken", refreshToken, {
+const setAuthCookies = (
+  res: Response,
+  accessToken: string,
+  refreshToken: string,
+) => {
+  const cookieOptions: any = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // HTTPS only in production
-    sameSite: "strict",
+    secure: true, // Always true for cross-site cookies
+    sameSite: "none", // Required for cross-site (vercel frontend -> vercel backend)
+  };
+
+  res.cookie("accessToken", accessToken, {
+    ...cookieOptions,
+    maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE,
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    ...cookieOptions,
     maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
   });
 };
@@ -25,7 +40,7 @@ export class UserController {
       const { user, accessToken, refreshToken } =
         await userService.registerUser(req.body);
       user.password = undefined;
-      setRefreshTokenCookie(res, refreshToken);
+      setAuthCookies(res, accessToken, refreshToken);
       sendSuccess(
         res,
         { accessToken, user },
@@ -41,7 +56,7 @@ export class UserController {
         req.body,
       );
       user.password = undefined;
-      setRefreshTokenCookie(res, refreshToken);
+      setAuthCookies(res, accessToken, refreshToken);
       sendSuccess(res, { accessToken, user }, "Login successful", 200);
     },
   );
@@ -59,17 +74,28 @@ export class UserController {
         );
       }
       const { accessToken } = await userService.refreshAccessToken(token);
+
+      // Set new access token in cookie
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE,
+      });
+
       sendSuccess(res, { accessToken }, "Access token refreshed", 200);
     },
   );
 
   logout = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
-      res.clearCookie("refreshToken", {
+      const cookieOptions: any = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
+        secure: true,
+        sameSite: "none",
+      };
+      res.clearCookie("refreshToken", cookieOptions);
+      res.clearCookie("accessToken", cookieOptions);
       sendSuccess(res, null, "Logged out successfully", 200);
     },
   );

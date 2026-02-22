@@ -29,10 +29,9 @@ export const useRegister = () => {
       }
     },
     onSuccess: (data) => {
-      const token = data.data?.accessToken || data.accessToken;
       const user = data.data?.user || data.user;
-      if (token) {
-        saveUserAuth({ token, ...user });
+      if (user) {
+        saveUserAuth(user);
         queryClient.invalidateQueries(["me"]);
       }
     },
@@ -72,14 +71,10 @@ export const useLogin = () => {
       }
     },
     onSuccess: (data) => {
-      const token = data.data?.accessToken || data.accessToken;
       const user = data.data?.user || data.user;
 
-      if (token) {
-        localStorage.setItem("token", token);
-        if (user) {
-          saveUserAuth({ token, ...user });
-        }
+      if (user) {
+        saveUserAuth(user);
         queryClient.invalidateQueries(["me"]);
       }
     },
@@ -90,10 +85,7 @@ export const useMe = () => {
   return useQuery({
     queryKey: ["me"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
       const localProfile = getUserProfile();
-
-      if (!token) return localProfile;
 
       try {
         const response = await apiClient.get("/users/me");
@@ -107,11 +99,10 @@ export const useMe = () => {
         return localProfile || backendUser;
       } catch (error) {
         console.error("Backend profile fetch failed:", error);
+        // Fallback to local profile on network error (might be unauthorized or just offline)
         if (error.response?.status === 401) {
-          localStorage.removeItem("token");
           return null;
         }
-        // Fallback to local profile on network error
         return localProfile;
       }
     },
@@ -140,7 +131,6 @@ export const useLogout = () => {
       await apiClient.post("/users/logout");
     },
     onSettled: () => {
-      localStorage.removeItem("token");
       queryClient.setQueryData(["me"], null);
     },
   });

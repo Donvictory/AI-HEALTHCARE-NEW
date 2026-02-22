@@ -134,40 +134,55 @@ export function Onboarding() {
   };
 
   const handleComplete = () => {
-    const auth = getUserAuth();
     const bmi = calculateBMI(
       parseFloat(formData.weight),
       parseFloat(formData.height),
     );
 
-    // Map to backend DTO / Enums
-    const backendData = {
+    // Map frontend labels to backend enums exactly
+    const conditionMap = {
+      None: "NONE",
+      Hypertension: "HYPERTENSION",
+      Diabetes: "DIABETES",
+      Asthma: "ASTHMA",
+      "Heart Disease": "HEART DISEASE",
+      "Malaria (Recurring)": "MALARIA",
+      "Sickle Cell": "SICKLE CELL",
+    };
+
+    const historyMap = {
+      None: "NONE",
+      Hypertension: "HYPERTENSION",
+      Diabetes: "DIABETES",
+      "Heart Disease": "HEART DISEASE",
+      Stroke: "STROKE",
+      Cancer: "CANCER",
+      "Sickle Cell": "SICKLE CELL",
+    };
+
+    const payload = {
+      phoneNumber: formData.phone,
       age: parseInt(formData.age),
       gender: formData.gender.toUpperCase(),
       height: parseFloat(formData.height),
       weight: parseFloat(formData.weight),
-      state: formData.state,
       city: formData.city,
-      phoneNumber: formData.phone,
+      state: formData.state,
       healthConditions: formData.knownConditions
-        .filter((c) => c !== "None")
-        .map((c) => {
-          if (c === "Malaria (Recurring)") return "MALARIA";
-          return c.toUpperCase();
-        }),
+        .map((c) => conditionMap[c] || "NONE")
+        .filter((c) => c !== "NONE"),
       familyHealthHistory: formData.familyHistory
-        .filter((h) => h !== "None")
-        .map((h) => h.toUpperCase()),
+        .map((h) => historyMap[h] || "NONE")
+        .filter((h) => h !== "NONE"),
       isFirstLogin: false,
     };
 
-    updateMeMutation.mutate(backendData, {
+    updateMeMutation.mutate(payload, {
       onSuccess: (response) => {
-        // response.data.user comes from our API structure
         const updatedUser = response.data?.user || response.user;
         saveUserProfile({
           ...updatedUser,
-          bmi, // Add calculated BMI for local storage if not in backend
+          bmi,
         });
         toast.success("Profile synchronized securely! Welcome! 🎉");
         navigate("/check-in");
@@ -175,12 +190,14 @@ export function Onboarding() {
       onError: (error) => {
         console.error("Sync failed:", error);
         toast.error(
-          "Server synchronization failed, but your data is saved locally.",
+          error.response?.data?.message ||
+            "Server synchronization failed, but your data is saved locally.",
         );
         // Fallback save to local storage
+        const auth = getUserAuth();
         saveUserProfile({
           ...auth,
-          ...backendData,
+          ...payload,
           bmi,
         });
         navigate("/check-in");
@@ -191,7 +208,6 @@ export function Onboarding() {
   const toggleCondition = (condition) => {
     setFormData((prev) => {
       let newConditions = [...prev.knownConditions];
-
       if (condition === "None") {
         newConditions = ["None"];
       } else {
@@ -201,11 +217,8 @@ export function Onboarding() {
         } else {
           newConditions.push(condition);
         }
-        if (newConditions.length === 0) {
-          newSymptoms = ["None"];
-        }
+        if (newConditions.length === 0) newConditions = ["None"];
       }
-
       return { ...prev, knownConditions: newConditions };
     });
   };
@@ -213,7 +226,6 @@ export function Onboarding() {
   const toggleFamilyHistory = (item) => {
     setFormData((prev) => {
       let newHistory = [...prev.familyHistory];
-
       if (item === "None") {
         newHistory = ["None"];
       } else {
@@ -223,11 +235,8 @@ export function Onboarding() {
         } else {
           newHistory.push(item);
         }
-        if (newHistory.length === 0) {
-          newHistory = ["None"];
-        }
+        if (newHistory.length === 0) newHistory = ["None"];
       }
-
       return { ...prev, familyHistory: newHistory };
     });
   };

@@ -44,6 +44,7 @@ export const updateProfileValidator = [
     .withMessage("Invalid family health history"),
   body("hasCompletedDailyChecks").optional().isBoolean(),
   body("currentDailyCheckStep").optional().isNumeric(),
+  body("isFirstLogin").optional().isBoolean(),
 ];
 
 export const refreshTokenValidator = [
