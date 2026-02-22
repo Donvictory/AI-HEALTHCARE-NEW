@@ -2,6 +2,15 @@
 import { motion } from "framer-motion";
 
 const LEVELS = {
+  none: {
+    color: "#64748b",
+    bgColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    label: "No Data",
+    emoji: "📋",
+    description: "Start your first check-in",
+    percent: 0,
+  },
   optimal: {
     color: "#10b981",
     bgColor: "#ecfdf5",

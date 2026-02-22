@@ -20,7 +20,11 @@ import {
   getPoints,
   getHealthTasks,
   toggleHealthTask,
+  getRemedyTasks,
+  saveRemedyTasks,
+  toggleRemedyTask,
 } from "../lib/storage";
+import { generateRemedyTasks } from "../lib/remedy-tasks";
 import { detectDrift, generateContextualMessage } from "../lib/drift-detection";
 import {
   Heart,
@@ -70,6 +74,7 @@ export function Dashboard() {
   const [driftResult, setDriftResult] = useState(null);
   const [points, setPoints] = useState(0);
   const [healthTasks, setHealthTasks] = useState([]);
+  const [remedyTasks, setRemedyTasks] = useState([]);
 
   useEffect(() => {
     // 1. Get Local Fallbacks
@@ -79,23 +84,56 @@ export function Dashboard() {
     const tasks = getHealthTasks();
 
     // 2. Merge with Backend (Backend takes priority)
-    const mergedCheckIns = backendCheckIns || localLast7Days;
-    const mergedToday = backendTodayCheckIn || localToday;
+    const rawCheckIns = backendCheckIns || localLast7Days;
+    const rawToday = backendTodayCheckIn || localToday;
 
-    // Normalizing backend data to match frontend expectations if needed
-    const normalizedCheckIns = mergedCheckIns.map((c) => ({
+    // 3. Normalize field names consistently (backend → internal shape)
+    //    This must match the normalise() logic inside drift-detection.js
+    const normalizeRecord = (c) => ({
       ...c,
-      // Map backend currentMood (1-10) to frontend mood if keys differ
-      mood: c.currentMood || c.mood,
-      physicalActivity: c.dailyActivityMeasure || c.physicalActivity,
-      waterIntake: c.numOfWaterGlasses || c.waterIntake,
-      date: c.createdAt || c.date,
-    }));
+      hoursSlept: parseFloat(c.hoursSlept) || 0,
+      stressLevel: parseFloat(c.stressLevel) || 0,
+      mood: parseFloat(c.currentMood ?? c.mood) || 0,
+      physicalActivity:
+        parseFloat(c.dailyActivityMeasure ?? c.physicalActivity) || 0,
+      waterIntake: parseFloat(c.numOfWaterGlasses ?? c.waterIntake) || 0,
+      healthStatus: (
+        c.currentHealthStatus ||
+        c.healthStatus ||
+        "GOOD"
+      ).toUpperCase(),
+      symptoms: Array.isArray(c.symptomsToday)
+        ? c.symptomsToday
+        : Array.isArray(c.symptoms)
+          ? c.symptoms
+          : [],
+      date: c.createdAt || c.date || new Date().toISOString(),
+    });
+
+    const normalizedCheckIns = rawCheckIns.map(normalizeRecord);
+    const normalizedToday = rawToday ? normalizeRecord(rawToday) : null;
 
     setCheckIns(normalizedCheckIns);
-    setTodayCheckIn(mergedToday);
+    setTodayCheckIn(normalizedToday);
     setPoints(userPoints);
     setHealthTasks(tasks);
+
+    // Generate or restore today's remedy tasks
+    const existingRemedy = getRemedyTasks();
+    if (normalizedToday) {
+      if (existingRemedy.length > 0) {
+        // Already generated today — restore them
+        setRemedyTasks(existingRemedy);
+      } else {
+        // Fresh generation based on today's check-in
+        const generated = generateRemedyTasks(normalizedToday, profile);
+        saveRemedyTasks(generated);
+        setRemedyTasks(generated);
+      }
+    } else {
+      // No check-in yet — clear any stale remedy tasks
+      setRemedyTasks([]);
+    }
 
     if (normalizedCheckIns.length > 0) {
       const result = detectDrift(normalizedCheckIns, profile);
@@ -144,15 +182,25 @@ export function Dashboard() {
     navigate("/find-doctor");
   };
 
-  const handleToggleTask = (taskId) => {
-    const isNowCompleted = toggleHealthTask(taskId);
-    setHealthTasks(getHealthTasks());
-    setPoints(getPoints());
-
-    if (isNowCompleted) {
-      toast.success("Task completed! Points earned! 🎉");
+  const handleToggleTask = (taskId, isRemedy = false) => {
+    if (isRemedy) {
+      const isNowCompleted = toggleRemedyTask(taskId);
+      setRemedyTasks(getRemedyTasks());
+      setPoints(getPoints());
+      if (isNowCompleted) {
+        toast.success("Remedy task done! Points earned! 🌿");
+      } else {
+        toast.info("Task unchecked. Points deducted. 🔄");
+      }
     } else {
-      toast.info("Task unchecked. Points deducted. 🔄");
+      const isNowCompleted = toggleHealthTask(taskId);
+      setHealthTasks(getHealthTasks());
+      setPoints(getPoints());
+      if (isNowCompleted) {
+        toast.success("Task completed! Points earned! 🎉");
+      } else {
+        toast.info("Task unchecked. Points deducted. 🔄");
+      }
     }
   };
 
@@ -418,17 +466,36 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {driftResult.insights.map((insight, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 p-4 bg-emerald-50 rounded-2xl border border-emerald-100"
-                  >
-                    <CheckCircle className="w-5 h-5 text-emerald-600 mt-0.5" />
-                    <span className="text-sm font-bold text-emerald-800">
-                      {insight}
-                    </span>
-                  </div>
-                ))}
+                {driftResult.insights.map((insight, idx) => {
+                  const isPositive =
+                    insight.startsWith("😊") ||
+                    insight.startsWith("😴") ||
+                    insight.startsWith("💧") ||
+                    insight.startsWith("🏃");
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex items-start gap-3 p-4 rounded-2xl border ${
+                        isPositive
+                          ? "bg-emerald-50 border-emerald-100"
+                          : "bg-amber-50 border-amber-100"
+                      }`}
+                    >
+                      <CheckCircle
+                        className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
+                          isPositive ? "text-emerald-600" : "text-amber-500"
+                        }`}
+                      />
+                      <span
+                        className={`text-sm font-bold ${
+                          isPositive ? "text-emerald-800" : "text-amber-800"
+                        }`}
+                      >
+                        {insight}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -712,18 +779,24 @@ export function Dashboard() {
                 Medical Disclaimer
               </div>
               <p className="text-xl font-bold leading-relaxed">
-                DriftCare is your health monitoring companion, detecting
-                patterns and encouraging early consultation.
+                DriftCare NG detects behavioral drift — not disease. It is a
+                risk intelligence layer, not a diagnostic tool.
               </p>
               <p className="text-sm font-medium opacity-80 max-w-lg mx-auto">
-                Always contact a licensed healthcare professional for medical
-                diagnoses. This is NOT a diagnostic tool.
+                Always consult a licensed healthcare professional for medical
+                diagnoses. This platform encourages early consultation — it does
+                NOT diagnose, prescribe, or replace doctors.
               </p>
-              <div className="pt-6">
+              <div className="pt-4 flex flex-wrap justify-center gap-3">
                 <div className="inline-flex items-center gap-2 bg-black/20 px-4 py-2 rounded-2xl">
                   <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
                   <span className="text-xs font-black uppercase tracking-widest">
-                    Privacy Guaranteed: Local Storage Only
+                    Behavior-First. Not Diagnosis.
+                  </span>
+                </div>
+                <div className="inline-flex items-center gap-2 bg-black/20 px-4 py-2 rounded-2xl">
+                  <span className="text-xs font-black uppercase tracking-widest">
+                    🩺 Doctor-Ready Export Available
                   </span>
                 </div>
               </div>
@@ -735,27 +808,44 @@ export function Dashboard() {
   );
 }
 
-// Generate downloadable health report
+// Generate downloadable health report (Doctor-Ready Export)
 function generateHealthReport(profile, checkIns, driftResult) {
-  const today = new Date().toLocaleDateString();
+  const today = new Date().toLocaleDateString("en-NG", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return `
 ═══════════════════════════════════════════
-    DRIFTCARE NG - HEALTH SUMMARY REPORT
+    DRIFTCARE NG — DOCTOR-READY HEALTH EXPORT
+    AI-Powered Preventive Health Drift Monitor
 ═══════════════════════════════════════════
 
 Generated: ${today}
-Patient Name: [Fill in your name]
+Patient Name: ${profile?.name || "[Patient Name]"}
 Age: ${profile?.age || "N/A"}
-Location: ${profile?.city}, ${profile?.state}
-
-───────────────────────────────────────────
-CURRENT HEALTH STATUS
-───────────────────────────────────────────
-
-Resilience Score: ${driftResult.resilienceScore}/100
-Drift Level: ${driftResult.driftLevel.toUpperCase()}
+Gender: ${profile?.gender || "N/A"}
+Location: ${profile?.city || "N/A"}, Nigeria
 BMI: ${profile?.bmi || "N/A"}
+
+⚠️  IMPORTANT: This is NOT a diagnostic report.
+    DriftCare NG is a preventive health drift monitor.
+    Data below represents behavioral trends only.
+
+───────────────────────────────────────────
+CURRENT DRIFT STATUS
+───────────────────────────────────────────
+
+Resilience Score : ${driftResult.resilienceScore}/100
+Drift Level      : ${driftResult.driftLevel.toUpperCase()}
+
+Drift Patterns Monitored:
+  🩺 Hypertension Risk  — stress + headache + poor sleep + family history
+  🌡️  Febrile Illness    — fever + fatigue + reduced activity (malaria-like)
+  🧠 Stress & Burnout   — sustained stress + mood decline + poor sleep
+  🩸 Diabetes Risk      — high BMI + low activity + fatigue + family history
 
 ───────────────────────────────────────────
 ACTIVE ALERTS
@@ -766,74 +856,105 @@ ${
     ? driftResult.alerts
         .map(
           (a) => `
-⚠️ ${a.severity.toUpperCase()}: ${a.message}
-   Recommendation: ${a.recommendation}
+⚠️  ${a.severity.toUpperCase()}: ${a.message}
+    Recommendation: ${a.recommendation}
 `,
         )
         .join("\n")
-    : "No active alerts."
+    : "✅ No active drift alerts at this time."
 }
 
 ───────────────────────────────────────────
-LAST 7 DAYS SUMMARY
+LAST 7 DAYS — BEHAVIORAL SUMMARY
 ───────────────────────────────────────────
 
-Total Check-ins: ${checkIns.length}
-Average Sleep: ${
+Total Check-ins       : ${checkIns.length}
+Average Sleep         : ${
     checkIns.length > 0
       ? (
           checkIns.reduce((sum, c) => sum + c.hoursSlept, 0) / checkIns.length
         ).toFixed(1)
       : "N/A"
-  } hours
-Average Stress Level: ${
+  } hours/night
+Average Stress Level  : ${
     checkIns.length > 0
       ? (
           checkIns.reduce((sum, c) => sum + c.stressLevel, 0) / checkIns.length
         ).toFixed(1)
       : "N/A"
   }/10
-Average Mood: ${
+Average Mood          : ${
     checkIns.length > 0
       ? (
           checkIns.reduce((sum, c) => sum + c.mood, 0) / checkIns.length
         ).toFixed(1)
       : "N/A"
   }/10
+Average Activity      : ${
+    checkIns.length > 0
+      ? Math.round(
+          checkIns.reduce((sum, c) => sum + (c.physicalActivity || 0), 0) /
+            checkIns.length,
+        )
+      : "N/A"
+  } mins/day
+Average Water Intake  : ${
+    checkIns.length > 0
+      ? (
+          checkIns.reduce((sum, c) => sum + (c.waterIntake || 0), 0) /
+          checkIns.length
+        ).toFixed(1)
+      : "N/A"
+  } glasses/day
 
 ───────────────────────────────────────────
-MEDICAL HISTORY
+MEDICAL HISTORY (SELF-REPORTED)
 ───────────────────────────────────────────
 
-Known Conditions: ${
+Known Conditions : ${
     profile?.knownConditions?.length
       ? profile.knownConditions.join(", ")
-      : "None"
+      : "None reported"
   }
-Family History: ${
-    profile?.familyHistory?.length ? profile.familyHistory.join(", ") : "None"
+Family History   : ${
+    profile?.familyHistory?.length
+      ? profile.familyHistory.join(", ")
+      : "None reported"
   }
 
 ───────────────────────────────────────────
 NOTES FOR HEALTHCARE PROVIDER
 ───────────────────────────────────────────
 
-This report is generated by DriftCare NG, a preventive health
-monitoring tool. It is NOT a diagnostic tool. Please use this
-information as context for clinical assessment.
+This report is generated by DriftCare NG — a Nigerian preventive
+health drift monitoring platform. It is NOT a diagnostic tool.
 
-The patient has been tracking daily health metrics including:
-- Sleep patterns
-- Stress levels
-- Physical activity
-- Hydration
-- Symptoms
+The patient has been tracking daily behavioral health inputs:
+  • Sleep duration & quality signals
+  • Stress levels (self-reported, 1–10)
+  • Mood trajectory (1–10)
+  • Physical activity (minutes)
+  • Hydration (glasses of water)
+  • Symptoms: fever, headache, fatigue, cough, chest pain
 
-Please review the alerts and trends above during consultation.
+DriftCare does NOT:
+  ✗ Diagnose any condition
+  ✗ Prescribe medication
+  ✗ Replace clinical assessment
+
+DriftCare DOES:
+  ✓ Build a personal health baseline
+  ✓ Detect deviations (drift) from that baseline
+  ✓ Alert the user to seek early consultation
+
+Please use the behavioral trends above as supplementary context
+for your clinical assessment. Focus on the Drift Level and Alerts
+sections as priority conversation starters.
 
 ───────────────────────────────────────────
 
-DriftCare NG | Preventive Health for Nigeria
+DriftCare NG | Predictive Health Companion
+AI-Powered Preventive Health for Nigeria
 Not a substitute for professional medical advice.
 
 ═══════════════════════════════════════════

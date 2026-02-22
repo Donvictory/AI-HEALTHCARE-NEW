@@ -490,7 +490,7 @@ export function Onboarding() {
                         onClick={handleNext}
                         className="flex-2 h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
                       >
-                        Pathology <ChevronRight className="ml-2 w-5 h-5" />
+                        Next <ChevronRight className="ml-2 w-5 h-5" />
                       </Button>
                     </div>
                   </div>

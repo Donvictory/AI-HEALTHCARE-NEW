@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   TASKS: "health_tasks",
   POINTS: "user_points",
   MEDICAL_REPORTS: "medical_reports",
+  REMEDY_TASKS: "remedy_tasks",
 };
 
 // --- AUTHENTICATION ---
@@ -144,6 +145,46 @@ export const toggleHealthTask = (taskId) => {
     return t;
   });
   saveHealthTasks(updated);
+  return status;
+};
+
+// --- REMEDY TASKS (generated daily from check-in) ---
+export const saveRemedyTasks = (tasks) => {
+  const today = new Date().toISOString().split("T")[0];
+  const payload = { date: today, tasks };
+  localStorage.setItem(STORAGE_KEYS.REMEDY_TASKS, JSON.stringify(payload));
+};
+
+export const getRemedyTasks = () => {
+  const data = localStorage.getItem(STORAGE_KEYS.REMEDY_TASKS);
+  if (!data) return [];
+  const payload = JSON.parse(data);
+  const today = new Date().toISOString().split("T")[0];
+  // Expire remedy tasks after the day they were generated
+  if (payload.date !== today) return [];
+  return payload.tasks || [];
+};
+
+export const toggleRemedyTask = (taskId) => {
+  const data = localStorage.getItem(STORAGE_KEYS.REMEDY_TASKS);
+  if (!data) return null;
+  const payload = JSON.parse(data);
+  let status = null;
+  payload.tasks = payload.tasks.map((t) => {
+    if (t.id === taskId) {
+      if (!t.completed) {
+        addPoints(t.points);
+        status = true;
+        return { ...t, completed: true };
+      } else {
+        deductPoints(t.points);
+        status = false;
+        return { ...t, completed: false };
+      }
+    }
+    return t;
+  });
+  localStorage.setItem(STORAGE_KEYS.REMEDY_TASKS, JSON.stringify(payload));
   return status;
 };
 

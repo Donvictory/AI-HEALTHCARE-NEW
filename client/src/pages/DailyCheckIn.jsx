@@ -19,12 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../Components/ui/select";
-import {
-  saveDailyCheckIn,
-  getTodaysCheckIn,
-  addPoints,
-  saveMedicalReport,
-} from "../lib/storage";
+import { saveDailyCheckIn, getTodaysCheckIn, addPoints } from "../lib/storage";
 import {
   Heart,
   Sparkles,
@@ -33,8 +28,6 @@ import {
   Droplet,
   Dumbbell,
   Activity,
-  Upload,
-  FileText,
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
@@ -45,7 +38,6 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMe } from "../hooks/use-auth";
 import { useCreateDailyCheckIn } from "../hooks/use-daily-check-in";
-import { useUploadMedia } from "../hooks/use-media";
 
 const symptoms = [
   "NONE",
@@ -87,7 +79,6 @@ export function DailyCheckIn() {
 
   const navigate = useNavigate();
   const checkInMutation = useCreateDailyCheckIn();
-  const uploadMutation = useUploadMedia();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkInData, setCheckInData] = useState({
@@ -101,9 +92,7 @@ export function DailyCheckIn() {
     smokedToday: false,
     journal: "",
     healthStatus: "GOOD",
-    reportNotes: "",
   });
-  const [uploadedFile, setUploadedFile] = useState(null);
 
   useEffect(() => {
     const todayCheckIn = getTodaysCheckIn();
@@ -117,35 +106,13 @@ export function DailyCheckIn() {
     setStep(step + 1);
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size must be less than 5MB");
-        return;
-      }
-      setUploadedFile(file);
-      toast.success("File uploaded successfully!");
-    }
-  };
-
   const handleComplete = async () => {
     setIsSubmitting(true);
     const today = new Date().toISOString().split("T")[0];
     const resilienceScore = calculateQuickScore(checkInData);
 
     try {
-      // 1. Handle File Upload if exists
-      let medicalReportUrls = [];
-      if (uploadedFile) {
-        toast.loading("Uploading medical report...");
-        const uploadResponse = await uploadMutation.mutateAsync(uploadedFile);
-        if (uploadResponse.status === "success") {
-          medicalReportUrls.push(uploadResponse.data.url);
-        }
-      }
-
-      // 2. Prepare payload for backend
+      // 1. Prepare payload for backend
       const symptomsToday = checkInData.symptoms.filter((s) => s !== "NONE");
       const lifestyleChecks = [];
       if (checkInData.drinkAlcohol) lifestyleChecks.push("DRANK_LAST_NIGHT");
@@ -161,20 +128,17 @@ export function DailyCheckIn() {
         symptomsToday,
         lifestyleChecks,
         anythingElse: checkInData.journal,
-        feelingAboutReport: checkInData.reportNotes,
-        medicalReports: medicalReportUrls, // Include the server-side URLs
       };
 
-      // 3. Submit to backend
+      // 2. Submit to backend
       await checkInMutation.mutateAsync(payload);
 
-      // 4. Local persistence for offline/legacy support
+      // 3. Local persistence for offline/legacy support
       const checkInLocal = {
         id: `checkin-${Date.now()}`,
         date: today,
         ...checkInData,
         resilienceScore,
-        medicalReports: medicalReportUrls,
       };
 
       saveDailyCheckIn(checkInLocal);
@@ -227,13 +191,13 @@ export function DailyCheckIn() {
               Daily Vitals Protocol
             </span>
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-              Step {step} of 5
+              Step {step} of 4
             </span>
           </div>
           <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${(step / 5) * 100}%` }}
+              animate={{ width: `${(step / 4) * 100}%` }}
               className="h-full bg-emerald-600 shadow-[0_0_10px_rgba(5,150,105,0.3)] transition-all duration-500"
             />
           </div>
@@ -268,7 +232,7 @@ export function DailyCheckIn() {
                   <div className="space-y-10">
                     <div className="text-center">
                       <div className="inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
-                        1 of 5 • Sleep & Energy
+                        1 of 4 • Sleep & Energy
                       </div>
                     </div>
 
@@ -391,7 +355,7 @@ export function DailyCheckIn() {
                   <div className="space-y-10">
                     <div className="text-center">
                       <div className="inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
-                        2 of 5 • Movement & Water
+                        2 of 4 • Movement & Water
                       </div>
                     </div>
 
@@ -501,7 +465,7 @@ export function DailyCheckIn() {
                   <div className="space-y-10">
                     <div className="text-center">
                       <div className="inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
-                        3 of 5 • Health Status
+                        3 of 4 • Health Status
                       </div>
                     </div>
 
@@ -593,102 +557,12 @@ export function DailyCheckIn() {
                   </div>
                 )}
 
-                {/* Step 4: Medical Reports */}
+                {/* Step 4: Lifestyle & Journal */}
                 {step === 4 && (
                   <div className="space-y-10">
                     <div className="text-center">
                       <div className="inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
-                        4 of 5 • Medical Reports (Optional)
-                      </div>
-                    </div>
-
-                    <div className="space-y-8">
-                      <div className="space-y-4">
-                        <Label className="text-xs font-black uppercase text-gray-400 tracking-widest">
-                          Upload Recent Medical Report
-                        </Label>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                          PDF, JPG, or PNG (Max 5MB)
-                        </p>
-
-                        <div
-                          className={`relative border-2 border-dashed rounded-3xl p-8 text-center transition-all ${uploadedFile ? "bg-emerald-50 border-emerald-300" : "bg-gray-50 border-gray-100"}`}
-                        >
-                          <input
-                            id="fileUpload"
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                          />
-                          <label
-                            htmlFor="fileUpload"
-                            className="cursor-pointer block"
-                          >
-                            <Upload
-                              className={`w-10 h-10 mx-auto mb-3 ${uploadedFile ? "text-emerald-600" : "text-gray-400"}`}
-                            />
-                            <p className="font-black text-gray-900 tracking-tight">
-                              {uploadedFile
-                                ? uploadedFile.name
-                                : "Click to upload"}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">
-                              Drop clinical ledger here
-                            </p>
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <Label
-                          htmlFor="reportNotes"
-                          className="text-xs font-black uppercase text-gray-400 tracking-widest"
-                        >
-                          Your feelings about the report
-                        </Label>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                          How do you feel about your recent test results?
-                        </p>
-                        <Textarea
-                          id="reportNotes"
-                          placeholder="E.g., My blood pressure reading was a bit high, feeling worried..."
-                          className="rounded-2xl border-2 p-4 font-medium min-h-[120px]"
-                          value={checkInData.reportNotes}
-                          onChange={(e) =>
-                            setCheckInData({
-                              ...checkInData,
-                              reportNotes: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <Button
-                        onClick={() => setStep(3)}
-                        variant="outline"
-                        className="flex-1 h-16 rounded-2xl border-2 font-bold hover:bg-gray-50 uppercase tracking-widest text-xs"
-                      >
-                        <ChevronLeft className="mr-2 w-4 h-4" /> Back
-                      </Button>
-                      <Button
-                        onClick={handleNext}
-                        className="flex-[2] h-16 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-lg transition-all active:scale-95 shadow-xl"
-                      >
-                        Next <ChevronRight className="ml-2 w-5 h-5" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 5: Lifestyle & Journal */}
-                {step === 5 && (
-                  <div className="space-y-10">
-                    <div className="text-center">
-                      <div className="inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
-                        5 of 5 • Final Questions
+                        4 of 4 • Final Questions
                       </div>
                     </div>
 
@@ -781,7 +655,7 @@ export function DailyCheckIn() {
 
                     <div className="flex gap-4">
                       <Button
-                        onClick={() => setStep(4)}
+                        onClick={() => setStep(3)}
                         variant="outline"
                         className="flex-1 h-16 rounded-2xl border-2 font-bold hover:bg-gray-50 uppercase tracking-widest text-xs"
                       >
