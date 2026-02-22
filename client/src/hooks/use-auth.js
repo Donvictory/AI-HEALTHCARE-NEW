@@ -105,34 +105,41 @@ export const useMe = () => {
     queryKey: ["me"],
     queryFn: async () => {
       try {
-        // Fetch Enriched Profile which includes stats (BMI, points, etc.)
+        console.log("useMe: calling /users/profile...");
         const response = await apiClient.get("/users/profile");
+        console.log("useMe raw response:", response.data);
+
         const data = response.data?.data;
-        const backendUser = data?.user;
-        const stats = data?.stats;
+        let backendUser =
+          data?.user || (response.data?.user ? response.data : null);
+
+        // Final check: if /profile didn't return a user structure we expect, try /me
+        if (!backendUser) {
+          console.log("useMe: /profile didn't return user, trying /me...");
+          const meResponse = await apiClient.get("/users/me");
+          backendUser = meResponse.data?.data?.user || meResponse.data?.user;
+        }
 
         if (backendUser) {
-          // Merge stats into user object for dashboard convenience
+          console.log("useMe: final user identified", backendUser.email);
           const enrichedUser = {
+            id: backendUser._id || backendUser.id,
             ...backendUser,
-            ...stats,
+            ...data?.stats,
           };
-          // Keep localStorage in sync with backend
           saveUserAuth(enrichedUser);
           return enrichedUser;
         }
 
-        // Backend returned no user — try localStorage fallback
+        console.log("useMe: no user in response, checking local storage...");
         const localUser = getUserAuth();
-        if (localUser) {
-          console.warn(
-            "Backend returned no user, using localStorage fallback.",
-          );
-          return localUser;
-        }
-
-        return null;
+        return localUser;
       } catch (error) {
+        console.error(
+          "useMe exception:",
+          error.response?.status,
+          error.message,
+        );
         if (error.response?.status === 401) {
           clearTokens();
           return null;
