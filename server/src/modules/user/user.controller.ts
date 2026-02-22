@@ -140,6 +140,26 @@ export class UserController {
     },
   );
 
+  onboard = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const allowedUpdates = { ...req.body };
+      delete allowedUpdates.password;
+      delete allowedUpdates.role;
+      delete allowedUpdates.email;
+
+      const updatedUser = await userService.onboardUser(
+        req.user.id,
+        allowedUpdates,
+      );
+      sendSuccess(
+        res,
+        { user: updatedUser },
+        "User onboarded successfully",
+        200,
+      );
+    },
+  );
+
   deleteMe = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
       await userService.deleteUserById(req.user.id);

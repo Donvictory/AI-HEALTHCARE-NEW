@@ -46,6 +46,7 @@ const swaggerSpec: OpenAPIV3.Document = {
           hasCompletedDailyChecks: { type: "boolean" },
           currentDailyCheckStep: { type: "integer" },
           isFirstLogin: { type: "boolean" },
+          isOnboarded: { type: "boolean" },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
         },

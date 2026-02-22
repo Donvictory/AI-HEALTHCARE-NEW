@@ -145,6 +145,16 @@ export class UserService {
     return updatedUser;
   }
 
+  async onboardUser(id: string, onboardData: Partial<IUser>) {
+    const updatedUser = await this.repo.updateById(id, {
+      ...onboardData,
+      isOnboarded: true,
+      isFirstLogin: false,
+    });
+    if (!updatedUser) throw new AppError("User not found", 404);
+    return updatedUser;
+  }
+
   async deleteUserById(id: string) {
     // 1. Delete all associated check-ins
     await DailyCheckInModel.deleteMany({ userId: id });

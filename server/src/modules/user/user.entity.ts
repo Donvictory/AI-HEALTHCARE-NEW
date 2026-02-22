@@ -59,6 +59,7 @@ export interface IUserEntity {
   currentDailyCheckStep?: number;
   healthPoints?: number; // accumulated from check-ins
   isFirstLogin?: boolean; // true until first completed onboarding
+  isOnboarded?: boolean;
 
   createdAt?: Date;
   updatedAt?: Date;
