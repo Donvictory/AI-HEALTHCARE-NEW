@@ -165,6 +165,7 @@ const swaggerSpec: OpenAPIV3.Document = {
     },
     { name: "Cron", description: "Automated tasks (Daily reset, etc.)" },
     { name: "Chat", description: "AI-assisted health chat" },
+    { name: "Tasks", description: "Daily health tasks" },
   ],
   paths: {
     // ─── Auth ──────────────────────────────────────────────────────
@@ -458,6 +459,73 @@ const swaggerSpec: OpenAPIV3.Document = {
         responses: {
           "200": { description: "Chat response generated" },
           "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+
+    // ─── Tasks ────────────────────────────────────────────────────
+    "/api/v1/tasks": {
+      get: {
+        tags: ["Tasks"],
+        summary: "Get today's daily health tasks for the logged in user",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Daily tasks retrieved",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    tasks: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          _id: { type: "string" },
+                          title: { type: "string" },
+                          description: { type: "string" },
+                          isCompleted: { type: "boolean" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    "/api/v1/tasks/{id}/complete": {
+      patch: {
+        tags: ["Tasks"],
+        summary: "Mark a health task as completed",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "Task marked as completed" },
+          "404": { description: "Task not found" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    "/api/v1/tasks/generate": {
+      post: {
+        tags: ["Tasks"],
+        summary: "Force regenerate daily health tasks",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "201": { description: "Tasks regenerated" },
           "401": { description: "Unauthorized" },
         },
       },
