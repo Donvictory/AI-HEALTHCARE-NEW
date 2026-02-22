@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../lib/api-client";
-import { getUserProfile, getUserAuth, saveUserAuth } from "../lib/storage";
+import {
+  getUserProfile,
+  getUserAuth,
+  saveUserAuth,
+  saveTokens,
+  clearTokens,
+} from "../lib/storage";
 
 export const useRegister = () => {
   const queryClient = useQueryClient();
@@ -31,8 +37,11 @@ export const useRegister = () => {
     },
     onSuccess: (data) => {
       const user = data.data?.user || data.user;
+      const { accessToken, refreshToken } = data.data || data;
+
       if (user) {
         saveUserAuth(user);
+        saveTokens(accessToken, refreshToken);
         queryClient.invalidateQueries(["me"]);
       }
     },
@@ -80,9 +89,11 @@ export const useLogin = () => {
     },
     onSuccess: (data) => {
       const user = data.data?.user || data.user;
+      const { accessToken, refreshToken } = data.data || data;
 
       if (user) {
         saveUserAuth(user);
+        saveTokens(accessToken, refreshToken);
         queryClient.invalidateQueries(["me"]);
       }
     },
@@ -122,24 +133,9 @@ export const useMe = () => {
 
         return null;
       } catch (error) {
-        // On 401, check if we have a locally saved session (e.g. demo/offline mode)
         if (error.response?.status === 401) {
-          const localUser = getUserAuth();
-          if (localUser) {
-            console.warn("Backend returned 401, using localStorage fallback.");
-            return localUser;
-          }
+          clearTokens();
           return null;
-        }
-
-        // Network error or server error — fall back to localStorage
-        console.warn(
-          "Backend profile fetch failed, using localStorage fallback.",
-          error.message,
-        );
-        const localUser = getUserAuth();
-        if (localUser) {
-          return localUser;
         }
         return null;
       }
@@ -169,6 +165,7 @@ export const useLogout = () => {
       await apiClient.post("/users/logout");
     },
     onSettled: () => {
+      clearTokens();
       queryClient.setQueryData(["me"], null);
     },
   });

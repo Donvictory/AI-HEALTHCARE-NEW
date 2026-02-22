@@ -11,6 +11,8 @@ const STORAGE_KEYS = {
   POINTS: "user_points",
   MEDICAL_REPORTS: "medical_reports",
   REMEDY_TASKS: "remedy_tasks",
+  ACCESS_TOKEN: "access_token",
+  REFRESH_TOKEN: "refresh_token",
 };
 
 // --- AUTHENTICATION ---
@@ -23,15 +25,30 @@ export const getUserAuth = () => {
   return data ? JSON.parse(data) : null;
 };
 
+export const saveTokens = (accessToken, refreshToken) => {
+  if (accessToken) localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+  if (refreshToken)
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+};
+
+export const getAccessToken = () =>
+  localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+export const getRefreshToken = () =>
+  localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+
+export const clearTokens = () => {
+  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+};
+
 export const isAuthenticated = () => {
-  // This is now handled by the useMe hook + cookies
-  // Returning false by default to encourage hook usage
-  return false;
+  return !!getAccessToken();
 };
 
 export const logout = () => {
   localStorage.removeItem(STORAGE_KEYS.AUTH);
   localStorage.removeItem(STORAGE_KEYS.PROFILE);
+  clearTokens();
   window.location.href = "/login";
 };
 

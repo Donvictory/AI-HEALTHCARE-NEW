@@ -1,15 +1,32 @@
 import axios from "axios";
+import {
+  getAccessToken,
+  getRefreshToken,
+  saveTokens,
+  clearTokens,
+} from "./storage";
 
 const apiClient = axios.create({
   baseURL:
     import.meta.env.VITE_API_URL ||
     "https://drift-care-backend.vercel.app/api/v1",
-  timeout: 10000,
+  timeout: 15000,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true,
 });
+
+// Request interceptor to add the access token to the header
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 let isRefreshing = false;
 let failedQueue = [];
@@ -32,8 +49,14 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // Avoid infinite loop if refresh token fails
-    if (originalRequest.url === "/users/refresh-token") {
-      isRefreshing = false;
+    if (
+      originalRequest.url?.includes("/users/refresh-token") ||
+      originalRequest._retry
+    ) {
+      if (originalRequest.url?.includes("/users/refresh-token")) {
+        clearTokens();
+        // window.location.href = "/login";
+      }
       return Promise.reject(error);
     }
 
@@ -42,26 +65,43 @@ apiClient.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then(() => {
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
             return apiClient(originalRequest);
           })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
+          .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
-      try {
-        await apiClient.post("/users/refresh-token");
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
         isRefreshing = false;
-        processQueue(null);
+        clearTokens();
+        return Promise.reject(error);
+      }
+
+      try {
+        const response = await axios.post(
+          `${apiClient.defaults.baseURL}/users/refresh-token`,
+          {
+            refreshToken,
+          },
+        );
+
+        const { accessToken } = response.data.data || response.data;
+        saveTokens(accessToken);
+
+        isRefreshing = false;
+        processQueue(null, accessToken);
+
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
         isRefreshing = false;
-        processQueue(refreshError);
-        // If refresh fails, you might want to redirect to login
+        processQueue(refreshError, null);
+        clearTokens();
         // window.location.href = "/login";
         return Promise.reject(refreshError);
       }
