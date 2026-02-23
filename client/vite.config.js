@@ -11,6 +11,11 @@ export default defineConfig({
       srcDir: "src",
       filename: "service-worker.js",
       registerType: "autoUpdate",
+      injectRegister: "auto",
+      devOptions: {
+        enabled: true,
+        type: "module",
+      },
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       manifest: {
         name: "DriftCare Health Intelligence",

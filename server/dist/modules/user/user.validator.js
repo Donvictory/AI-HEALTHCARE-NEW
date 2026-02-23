@@ -76,5 +76,7 @@ exports.onboardUserValidator = [
         .withMessage("Invalid family health history"),
 ];
 exports.refreshTokenValidator = [
-    (0, express_validator_1.body)("refreshToken").notEmpty().withMessage("Refresh token is required"),
+    // Refresh token may arrive either as an httpOnly cookie (primary) or in the
+    // request body (legacy / non-browser clients). Make the body field optional.
+    (0, express_validator_1.body)("refreshToken").optional().isString(),
 ];

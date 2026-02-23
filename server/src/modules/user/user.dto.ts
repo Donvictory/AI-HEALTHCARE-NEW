@@ -7,23 +7,23 @@ import {
 
 // ─── Request DTOs ─────────────────────────────────────────────────────────────
 
-export interface RegisterDto {
-  name: string;
-  email: string;
-  password: string;
+export class RegisterDto {
+  name!: string;
+  email!: string;
+  password!: string;
   role?: UserRole;
 }
 
-export interface LoginDto {
-  email: string;
-  password: string;
+export class LoginDto {
+  email!: string;
+  password!: string;
 }
 
-export interface RefreshTokenDto {
-  refreshToken: string;
+export class RefreshTokenDto {
+  refreshToken!: string;
 }
 
-export interface UpdateProfileDto {
+export class UpdateProfileDto {
   age?: number;
   gender?: Gender;
   height?: number;
@@ -38,7 +38,7 @@ export interface UpdateProfileDto {
   isFirstLogin?: boolean;
 }
 
-export interface OnboardUserDto {
+export class OnboardUserDto {
   age?: number;
   gender?: Gender;
   height?: number;
@@ -52,12 +52,12 @@ export interface OnboardUserDto {
 
 // ─── Response DTOs ────────────────────────────────────────────────────────────
 
-export interface UserDto {
-  _id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  isActive: boolean;
+export class UserDto {
+  _id!: string;
+  name!: string;
+  email!: string;
+  role!: UserRole;
+  isActive!: boolean;
   age?: number;
   gender?: Gender;
   height?: number;
@@ -75,8 +75,8 @@ export interface UserDto {
   updatedAt?: Date;
 }
 
-export interface AuthResponseDto {
-  accessToken: string;
-  refreshToken: string;
-  user: UserDto;
+export class AuthResponseDto {
+  accessToken!: string;
+  refreshToken!: string;
+  user!: UserDto;
 }

@@ -7,6 +7,7 @@ import { subscribeUserToPush } from "../lib/push-notifications";
 import { Heart, Home, User, Stethoscope, Bot, Loader2 } from "lucide-react";
 
 import { Navbar } from "./Navbar";
+import { InstallPWA } from "./InstallPWA";
 
 export function Layout() {
   const navigate = useNavigate();
@@ -103,6 +104,8 @@ export function Layout() {
           </div>
         </nav>
       )}
+
+      <InstallPWA />
     </div>
   );
 }

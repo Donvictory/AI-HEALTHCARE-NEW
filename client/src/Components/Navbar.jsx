@@ -67,23 +67,7 @@ export function Navbar() {
 
           {/* Desktop Navigation Hints */}
           <div className="hidden md:flex items-center gap-8">
-            {[
-              { label: "Dashboard", path: "/dashboard" },
-              { label: "Check-in", path: "/check-in" },
-              { label: "Care Center", path: "/find-doctor" },
-            ].map((item) => (
-              <button
-                key={item.label}
-                onClick={() => navigate(item.path)}
-                className={`text-xs font-bold transition-colors uppercase tracking-widest ${
-                  location.pathname === item.path
-                    ? "text-emerald-600"
-                    : "text-gray-500 hover:text-emerald-600"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+            {/* Navigation links removed to favor dashboard-centric interaction */}
           </div>
 
           {/* Action Icons */}

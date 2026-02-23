@@ -96,7 +96,7 @@ export function DailyCheckIn() {
 
   useEffect(() => {
     const todayCheckIn = getTodaysCheckIn();
-    if (todayCheckIn) {
+    if (user?.hasCompletedDailyChecks === true) {
       toast.info("You've already checked in today! 💚");
       navigate("/dashboard");
     }

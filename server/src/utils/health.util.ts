@@ -52,3 +52,38 @@ export function calculateResilience(checkIn: Partial<IDailyCheckInEntity>) {
     },
   };
 }
+
+export function calculateDrift(
+  recentCheckIns: any[],
+  baselineCheckIns: any[],
+): number {
+  if (recentCheckIns.length === 0 || baselineCheckIns.length === 0) return 0;
+
+  const getAvg = (arr: any[], key: string) =>
+    arr.reduce((sum, ci) => sum + (ci[key] || 0), 0) / arr.length;
+
+  const recentSleep = getAvg(recentCheckIns, "hoursSlept");
+  const baselineSleep = getAvg(baselineCheckIns, "hoursSlept");
+
+  const recentStress = getAvg(recentCheckIns, "stressLevel");
+  const baselineStress = getAvg(baselineCheckIns, "stressLevel");
+
+  const recentMood = getAvg(recentCheckIns, "currentMood");
+  const baselineMood = getAvg(baselineCheckIns, "currentMood");
+
+  // Higher stress = higher drift, Lower sleep/mood = higher drift
+  const sleepDrift =
+    baselineSleep > 0
+      ? ((baselineSleep - recentSleep) / baselineSleep) * 100
+      : 0;
+  const stressDrift =
+    baselineStress > 0
+      ? ((recentStress - baselineStress) / baselineStress) * 100
+      : 0;
+  const moodDrift =
+    baselineMood > 0 ? ((baselineMood - recentMood) / baselineMood) * 100 : 0;
+
+  const totalDrift = (sleepDrift + stressDrift + moodDrift) / 3;
+
+  return Math.max(0, Math.round(totalDrift));
+}

@@ -4,12 +4,19 @@ DriftCare NG is a premium, AI-powered health monitoring and "drift detection" pl
 
 ## ✨ Key Features
 
+### 🏥 Clinical Interoperability (Winning Points)
+
+- **FHIR Alignment**: Data structure is modeled after **HL7 FHIR** standards for global interoperability, ensuring data is ready for professional medical environments.
+- **SBAR Protocol**: Clinical exports and AI summaries follow the professional **SBAR standard** (Situation, Background, Assessment, Recommendation) to improve doctor-patient communication.
+- **Ecosystem Ready**: Built-in hooks and visual interfaces for future integration with Nigerian EMR giants like **Helium Health**, **Heala**, and **AXA Mansard**.
+- **Nearby Care Context**: Live geolocation-based integration to find and share health summaries with the closest care facilities in real-time.
+
 ### 📊 Advanced Health Analytics
 
 - **Wellness Index Trend**: A high-impact composite trend line that averages sleep, mood, activity, and hydration to show your overall health trajectory.
 - **Biometric Trajectory Graph**: Professional-grade multi-series charts that correlate Resilience, Mood, and Stress impact over 7 days.
 - **Resilience Tank**: A visual "energy meter" that indicates your current adaptive capacity based on recent biometric data.
-- **Drift Analysis Gauge**: An AI-driven indicator that detects when your daily health patterns are "drifting" away from your optimal baseline.
+- **Drift Analysis Gauge**: AN AI-driven indicator that detects when your daily health patterns are "drifting" away from your optimal baseline.
 
 ### 🤖 AI Health Companion
 
@@ -73,7 +80,8 @@ DriftCare NG is a premium, AI-powered health monitoring and "drift detection" pl
 - [ ] Integration with wearable IoT health devices.
 - [ ] Multi-user profile support on a single device.
 - [ ] Advanced predictive analytics using machine learning models.
-- [ ] Exportable PDF medical summaries for doctor consultations.
+- [x] Exportable SBAR clinical summaries for doctor consultations.
+- [x] HL7 FHIR-aligned data structures for EMR interoperability.
 
 ---
 

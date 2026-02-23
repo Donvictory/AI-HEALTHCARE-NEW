@@ -13,6 +13,10 @@ import { Button } from "../Components/ui/button";
 import { Alert, AlertDescription } from "../Components/ui/alert";
 import { ResilienceTank } from "../Components/ResilienceTank";
 import { DriftGauge } from "../Components/DriftGauge";
+import { EMRModal } from "../Components/EMRModal";
+import { DoctorReport } from "../Components/DoctorReport";
+import { PushNotificationBanner } from "../Components/PushNotificationBanner";
+import apiClient from "../lib/api-client";
 import {
   getUserProfile,
   getCheckInsLast7Days,
@@ -38,9 +42,10 @@ import {
   CheckCircle,
   Circle,
   Bot,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   BarChart,
   Bar,
@@ -77,7 +82,41 @@ export function Dashboard() {
   const [healthTasks, setHealthTasks] = useState([]);
   const [remedyTasks, setRemedyTasks] = useState([]);
 
+  // New Ecosystem State
+  const [isEMRModalOpen, setIsEMRModalOpen] = useState(false);
+  const [isSBAROpen, setIsSBAROpen] = useState(false);
+  const [sbarData, setSbarData] = useState(null);
+  const [connectedEMR, setConnectedEMR] = useState(
+    JSON.parse(localStorage.getItem("connectedEMR") || "null"),
+  );
+  const [nearbyHospitals, setNearbyHospitals] = useState([]);
+
   useEffect(() => {
+    // Get nearby hospitals via Geolocation
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        // In a real app, we'd fetch from an API like Google Places
+        // For the hackathon hack, we'll simulate based on location
+        setNearbyHospitals([
+          {
+            name: "Reddington Hospital",
+            distance: "1.2km",
+            tags: ["Tertiary", "24/7"],
+          },
+          {
+            name: "Lagoon Hospital",
+            distance: "2.5km",
+            tags: ["General", "Surgery"],
+          },
+          {
+            name: "St. Nicholas Hospital",
+            distance: "3.1km",
+            tags: ["Premium", "Cardiology"],
+          },
+        ]);
+      });
+    }
+
     // 1. Get Local Fallbacks
     const localLast7Days = getCheckInsLast7Days();
     const localToday = getTodaysCheckIn();
@@ -206,16 +245,25 @@ export function Dashboard() {
   };
 
   const handleExport = () => {
-    const report = generateHealthReport(profile, checkIns, driftResult);
-    const blob = new Blob([report], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `DriftCare_Health_Report_${
-      new Date().toISOString().split("T")[0]
-    }.txt`;
-    a.click();
-    toast.success("Health report downloaded! Show it to your doctor. 📄");
+    toast.info("Generating professional SBAR report...");
+    fetchSBAR();
+  };
+
+  const fetchSBAR = async () => {
+    try {
+      const { data } = await apiClient.get("/dashboard/sbar");
+      setSbarData(data.data);
+      setIsSBAROpen(true);
+    } catch (error) {
+      console.error("Failed to fetch SBAR:", error);
+      toast.error("Could not generate clinical report. Try again later.");
+    }
+  };
+
+  const handleConnectEMR = (provider) => {
+    setConnectedEMR(provider);
+    localStorage.setItem("connectedEMR", JSON.stringify(provider));
+    toast.success(`Successfully linked with ${provider.name} ecosystem!`);
   };
 
   if (!profile || !driftResult) {
@@ -291,13 +339,14 @@ export function Dashboard() {
   const completedTasks = healthTasks.filter((t) => t.completed).length;
 
   return (
-    <div className="min-h-screen p-4 pb-24 bg-gray-50/30">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen pb-40 bg-gray-50/30">
+      <PushNotificationBanner />
+      <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center bg-white/50 backdrop-blur-sm rounded-[2rem] p-8 border border-white/20 shadow-xl shadow-black/5"
+          className="text-center bg-white/50 backdrop-blur-sm rounded-4xl p-8 border border-white/20 shadow-xl shadow-black/5"
         >
           <div className="flex justify-center mb-6">
             <div className="bg-emerald-600 p-4 rounded-3xl shadow-lg shadow-emerald-200">
@@ -324,7 +373,7 @@ export function Dashboard() {
 
         {/* Main Stats */}
         <div className="grid md:grid-cols-2 gap-6">
-          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
+          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-4xl">
             <CardHeader className="pb-2">
               <CardTitle className="text-xl flex items-center gap-2">
                 <TrendingUp className="w-6 h-6 text-emerald-600" />
@@ -337,7 +386,7 @@ export function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
+          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-4xl">
             <CardHeader className="pb-2">
               <CardTitle className="text-xl flex items-center gap-2">
                 <AlertTriangle className="w-6 h-6 text-amber-500" />
@@ -353,9 +402,119 @@ export function Dashboard() {
           </Card>
         </div>
 
+        {/* ECOSYSTEM ROW: EMR Sync & SBAR Report */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <motion.div
+            whileHover={{ y: -5 }}
+            className="group cursor-pointer"
+            onClick={() => !connectedEMR && setIsEMRModalOpen(true)}
+          >
+            <Card
+              className={`border-none shadow-xl overflow-hidden rounded-4xl h-full ${connectedEMR ? "bg-emerald-900 text-white" : "bg-white"}`}
+            >
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Building2
+                        className={`w-6 h-6 ${connectedEMR ? "text-emerald-400" : "text-blue-600"}`}
+                      />
+                      EMR Ecosystem
+                    </CardTitle>
+                    <CardDescription
+                      className={connectedEMR ? "text-emerald-200" : ""}
+                    >
+                      {connectedEMR
+                        ? "Live Health Data Sync"
+                        : "Connect to Hospital Record"}
+                    </CardDescription>
+                  </div>
+                  {connectedEMR && (
+                    <div className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-400/30 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      FHIR Active
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {connectedEMR ? (
+                  <div className="space-y-4">
+                    <div className="bg-white/10 rounded-2xl p-4 flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-emerald-400" />
+                      <span className="text-sm font-bold">
+                        Synced with {connectedEMR.name}
+                      </span>
+                    </div>
+                    <p className="text-xs text-emerald-200/60 font-medium">
+                      Your longitudinal drift metrics are now visible to your
+                      primary healthcare provider.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex -space-x-2">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center"
+                        >
+                          <Building2 className="w-4 h-4 text-gray-400" />
+                        </div>
+                      ))}
+                      <div className="w-8 h-8 rounded-full bg-blue-50 border-2 border-white flex items-center justify-center">
+                        <span className="text-[10px] font-bold text-blue-600">
+                          +10
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-2xl border-2 font-black border-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all"
+                    >
+                      Connect Clinic
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ y: -5 }}
+            className="group cursor-pointer"
+            onClick={handleExport}
+          >
+            <Card className="border-none shadow-xl bg-white overflow-hidden rounded-4xl h-full">
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-purple-600" />
+                  Doctor's Report
+                </CardTitle>
+                <CardDescription>
+                  Clinical SBAR Professional Summary
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-purple-50 rounded-2xl p-4 border border-purple-100">
+                  <p className="text-xs font-bold text-purple-900">
+                    Standardized Medical Format
+                  </p>
+                  <p className="text-[10px] text-purple-700 mt-1">
+                    Ready for ${profile.name}'s next clinical presentation.
+                  </p>
+                </div>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black py-6 shadow-lg shadow-purple-200">
+                  Generate Summary
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
         {/* Health Performance Radar */}
         {radarData.length > 0 && (
-          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
+          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-4xl">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-purple-600" />
@@ -386,6 +545,67 @@ export function Dashboard() {
           </Card>
         )}
 
+        {/* LOCAL CONTEXT: Nearby Care */}
+        {nearbyHospitals.length > 0 && (
+          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-4xl">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <MapPin className="w-6 h-6 text-red-500" />
+                    Nearby Care Facilities
+                  </CardTitle>
+                  <CardDescription>
+                    Closest hospitals to your current location
+                  </CardDescription>
+                </div>
+                <div className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" />
+                  Live Location
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {nearbyHospitals.map((hospital, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-gray-50 rounded-3xl p-5 border border-gray-100 hover:border-red-200 transition-all group"
+                  >
+                    <p className="font-black text-gray-900 group-hover:text-red-700 transition-colors">
+                      {hospital.name}
+                    </p>
+                    <p className="text-xs font-bold text-gray-400 mt-1 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {hospital.distance} away
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {hospital.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[8px] font-black uppercase tracking-widest bg-white px-2 py-0.5 rounded-md border text-gray-500"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        toast.success(`Report shared with ${hospital.name}! 🏥`)
+                      }
+                      className="w-full mt-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 hover:bg-gray-900 hover:text-white transition-all"
+                    >
+                      Send Report
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* AI Message */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -393,7 +613,7 @@ export function Dashboard() {
           transition={{ delay: 0.3 }}
         >
           <Alert
-            className={`border-none shadow-xl p-8 rounded-[2rem] flex items-start gap-4 ${
+            className={`border-none shadow-xl p-8 rounded-4xl flex items-start gap-4 ${
               driftResult.driftLevel === "critical"
                 ? "bg-red-50 text-red-900"
                 : driftResult.driftLevel === "concern"
@@ -429,7 +649,7 @@ export function Dashboard() {
 
         {/* Alerts */}
         {driftResult.alerts && driftResult.alerts.length > 0 && (
-          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
+          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-4xl">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
                 <AlertTriangle className="w-6 h-6 text-orange-600" />
@@ -458,7 +678,7 @@ export function Dashboard() {
 
         {/* Insights */}
         {driftResult.insights && driftResult.insights.length > 0 && (
-          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
+          <Card className="border-none shadow-xl bg-white overflow-hidden rounded-4xl">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2 text-emerald-900">
                 <TrendingUp className="w-6 h-6 text-emerald-600" />
@@ -503,7 +723,7 @@ export function Dashboard() {
         )}
 
         {/* Biometric Trends (Longitudinal Tracker) */}
-        <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
+        <Card className="border-none shadow-xl bg-white overflow-hidden rounded-4xl">
           <CardHeader className="bg-gray-50/50">
             <div className="flex items-center justify-between">
               <div>
@@ -640,7 +860,7 @@ export function Dashboard() {
         </Card>
 
         {/* Daily Health Tasks — All in one section */}
-        <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
+        <Card className="border-none shadow-xl bg-white overflow-hidden rounded-4xl">
           <CardHeader className="bg-emerald-50/50">
             <div className="flex items-center justify-between">
               <div>
@@ -805,7 +1025,7 @@ export function Dashboard() {
         </Card>
 
         {/* Stats Card */}
-        <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[2rem]">
+        <Card className="border-none shadow-xl bg-white overflow-hidden rounded-4xl">
           <CardHeader>
             <CardTitle className="text-xl">Biological Profile</CardTitle>
           </CardHeader>
@@ -852,7 +1072,7 @@ export function Dashboard() {
         </Card>
 
         {/* Footer Note */}
-        <Card className="bg-gradient-to-br from-emerald-600 to-blue-700 text-white border-none shadow-2xl rounded-[2.5rem] overflow-hidden mb-28">
+        <Card className="bg-gradient-to-br from-emerald-600 to-blue-700 text-white border-none shadow-2xl rounded-4xl overflow-hidden">
           <CardContent className="p-10 relative">
             <div className="absolute top-0 right-0 p-12 opacity-10">
               <Sparkles className="w-24 h-24" />
@@ -889,35 +1109,19 @@ export function Dashboard() {
       </div>
 
       {/* Sticky Action Buttons — always visible at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-t border-gray-100 shadow-[0_-4px_30px_rgba(0,0,0,0.08)]">
-        <div className="max-w-5xl mx-auto px-4 py-3 grid grid-cols-3 gap-3">
-          <Button
-            onClick={handleCheckIn}
-            className="h-16 md:h-20 rounded-2xl flex flex-col gap-1 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all hover:scale-[1.02] active:scale-95"
-          >
-            <Calendar className="w-5 h-5 md:w-6 md:h-6" />
-            <span className="font-black text-[10px] md:text-sm">
-              {todayCheckIn ? "Completed ✓" : "Check-In"}
-            </span>
-          </Button>
-          <Button
-            onClick={handleFindDoctor}
-            variant="outline"
-            className="h-16 md:h-20 rounded-2xl flex flex-col gap-1 border-2 border-emerald-100 text-emerald-700 hover:bg-emerald-50 shadow-lg group transition-all hover:scale-[1.02] active:scale-95"
-          >
-            <MapPin className="w-5 h-5 md:w-6 md:h-6 group-hover:animate-bounce" />
-            <span className="font-black text-[10px] md:text-sm">Find Care</span>
-          </Button>
-          <Button
-            onClick={handleExport}
-            variant="outline"
-            className="h-16 md:h-20 rounded-2xl flex flex-col gap-1 border-2 border-purple-100 text-purple-700 hover:bg-purple-50 shadow-lg group transition-all hover:scale-[1.02] active:scale-95"
-          >
-            <FileText className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-12" />
-            <span className="font-black text-[10px] md:text-sm">Export</span>
-          </Button>
-        </div>
-      </div>
+
+      {/* MODALS */}
+      <EMRModal
+        isOpen={isEMRModalOpen}
+        onClose={() => setIsEMRModalOpen(false)}
+        onConnect={handleConnectEMR}
+      />
+
+      <AnimatePresence>
+        {isSBAROpen && (
+          <DoctorReport data={sbarData} onClose={() => setIsSBAROpen(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

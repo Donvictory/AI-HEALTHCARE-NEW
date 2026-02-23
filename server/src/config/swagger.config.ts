@@ -389,6 +389,59 @@ const swaggerSpec: OpenAPIV3.Document = {
         },
       },
     },
+    "/api/v1/users/subscribe-notifications": {
+      post: {
+        tags: ["Users"],
+        summary: "Subscribe to push notifications",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  subscription: {
+                    type: "object",
+                    properties: {
+                      endpoint: { type: "string" },
+                      keys: {
+                        type: "object",
+                        properties: {
+                          p256dh: { type: "string" },
+                          auth: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Subscribed successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    message: {
+                      type: "string",
+                      example: "Notifications subscribed successfully",
+                    },
+                    data: { type: "object", nullable: true },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
 
     // ─── Dashboard ────────────────────────────────────────────────
     "/api/v1/dashboard": {
@@ -404,19 +457,106 @@ const swaggerSpec: OpenAPIV3.Document = {
                 schema: {
                   type: "object",
                   properties: {
-                    hasCheckedInToday: { type: "boolean" },
-                    resilience: { type: "integer" },
-                    driftLevel: {
+                    success: { type: "boolean", example: true },
+                    message: {
                       type: "string",
-                      enum: ["OPTIMAL", "NOMINAL", "CONCERNING", "CRITICAL"],
+                      example: "Dashboard metrics retrieved",
                     },
-                    radarData: { type: "array", items: { type: "object" } },
-                    breakdown: { type: "object" },
+                    data: {
+                      type: "object",
+                      properties: {
+                        hasCheckedInToday: { type: "boolean" },
+                        resilience: { type: "integer" },
+                        driftLevel: {
+                          type: "string",
+                          enum: [
+                            "OPTIMAL",
+                            "NOMINAL",
+                            "CONCERNING",
+                            "CRITICAL",
+                          ],
+                        },
+                        radarData: { type: "array", items: { type: "object" } },
+                        breakdown: { type: "object" },
+                        overallDrift: { type: "number" },
+                      },
+                    },
                   },
                 },
               },
             },
           },
+        },
+      },
+    },
+    "/api/v1/dashboard/fhir": {
+      get: {
+        tags: ["Dashboard"],
+        summary: "Export user health data in HL7 FHIR standard format",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "FHIR Bundle retrieved",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    message: {
+                      type: "string",
+                      example: "FHIR data exported successfully",
+                    },
+                    data: {
+                      type: "object",
+                      properties: {
+                        resourceType: { type: "string", example: "Bundle" },
+                        type: { type: "string", example: "collection" },
+                        entry: { type: "array", items: { type: "object" } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    "/api/v1/dashboard/sbar": {
+      get: {
+        tags: ["Dashboard"],
+        summary: "Get professional SBAR clinical health summary",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "SBAR summary retrieved",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    message: {
+                      type: "string",
+                      example: "SBAR report generated successfully",
+                    },
+                    data: {
+                      type: "object",
+                      properties: {
+                        situation: { type: "string" },
+                        background: { type: "string" },
+                        assessment: { type: "string" },
+                        recommendation: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized" },
         },
       },
     },

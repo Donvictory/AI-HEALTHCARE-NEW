@@ -7,43 +7,78 @@ import {
 
 // ─── Step DTOs (per step of the check-in wizard) ─────────────────────────────
 
-export interface SleepAndEnergyDto {
-  hoursSlept: number;
-  stressLevel: number; // 1–10
-  currentMood: number; // 1–10
+export class SleepAndEnergyDto {
+  hoursSlept!: number;
+  stressLevel!: number; // 1–10
+  currentMood!: number; // 1–10
 }
 
-export interface MovementAndWaterDto {
-  dailyActivityMeasure: number; // minutes
-  numOfWaterGlasses: number;
+export class MovementAndWaterDto {
+  dailyActivityMeasure!: number; // minutes
+  numOfWaterGlasses!: number;
 }
 
-export interface HealthStatusDto {
-  currentHealthStatus: CurrentHealthStatus;
-  symptomsToday: Symptom[];
+export class HealthStatusDto {
+  currentHealthStatus!: CurrentHealthStatus;
+  symptomsToday!: Symptom[];
 }
 
-export interface MedicalReportsDto {
+export class MedicalReportsDto {
   medicalReports?: string[];
   feelingAboutReport?: string;
 }
 
-export interface FinalQuestionsDto {
-  lifestyleChecks: LifestyleCheck[];
+export class FinalQuestionsDto {
+  lifestyleChecks!: LifestyleCheck[];
   anythingElse?: string;
 }
 
 // ─── Full Create / Update DTOs ────────────────────────────────────────────────
 
-export type CreateDailyCheckInDto = Omit<
-  IDailyCheckInEntity,
-  "_id" | "userId" | "createdAt" | "updatedAt"
->;
+export class CreateDailyCheckInDto {
+  hoursSlept!: number;
+  stressLevel!: number;
+  currentMood!: number;
+  dailyActivityMeasure!: number;
+  numOfWaterGlasses!: number;
+  currentHealthStatus!: CurrentHealthStatus;
+  symptomsToday!: Symptom[];
+  medicalReports?: string[];
+  feelingAboutReport?: string;
+  lifestyleChecks!: LifestyleCheck[];
+  anythingElse?: string;
+}
 
-export type UpdateDailyCheckInDto = Partial<CreateDailyCheckInDto>;
+export class UpdateDailyCheckInDto {
+  hoursSlept?: number;
+  stressLevel?: number;
+  currentMood?: number;
+  dailyActivityMeasure?: number;
+  numOfWaterGlasses?: number;
+  currentHealthStatus?: CurrentHealthStatus;
+  symptomsToday?: Symptom[];
+  medicalReports?: string[];
+  feelingAboutReport?: string;
+  lifestyleChecks?: LifestyleCheck[];
+  anythingElse?: string;
+}
 
 // ─── Response DTO ─────────────────────────────────────────────────────────────
 
-export interface DailyCheckInResponseDto extends IDailyCheckInEntity {
-  _id: string;
+export class DailyCheckInResponseDto {
+  _id!: string;
+  userId!: string;
+  hoursSlept!: number;
+  stressLevel!: number;
+  currentMood!: number;
+  dailyActivityMeasure!: number;
+  numOfWaterGlasses!: number;
+  currentHealthStatus!: CurrentHealthStatus;
+  symptomsToday!: Symptom[];
+  medicalReports?: string[];
+  feelingAboutReport?: string;
+  lifestyleChecks!: LifestyleCheck[];
+  anythingElse?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

@@ -294,6 +294,7 @@ router.patch("/me", user_validator_1.updateProfileValidator, validate_request_mi
  *         description: Unauthorized
  */
 router.post("/onboard", user_validator_1.onboardUserValidator, validate_request_middleware_1.validateRequest, userController.onboard.bind(userController));
+router.post("/subscribe-notifications", userController.subscribeNotifications.bind(userController));
 router.delete("/me", userController.deleteMe.bind(userController));
 // Restrict to admins and above
 router.use((0, auth_middleware_1.restrictTo)(user_entity_1.UserRole.SUPER_ADMIN, user_entity_1.UserRole.ADMIN));

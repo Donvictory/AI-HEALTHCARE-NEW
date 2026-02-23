@@ -33,12 +33,8 @@ const connectToDatabase = async () => {
     }
   })();
 
-  // Do not await so the server can start listening even if DB is down
-  if (process.env.NODE_ENV === "development") {
-    console.warn("Starting server without waiting for MongoDB connection...");
-  } else {
-    await connectionPromise;
-  }
+  // Await the connection to ensure the system is ready before accepting requests
+  await connectionPromise;
 };
 
 export default connectToDatabase;

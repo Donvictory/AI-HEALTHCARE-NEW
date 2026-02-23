@@ -119,14 +119,14 @@ export class UserController {
 
   getMe = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const user = await userService.getUserById(req.user.id);
+      const user = await userService.getUserById((req as any).user.id);
       sendSuccess(res, { user }, "User profile retrieved successfully", 200);
     },
   );
 
   getProfile = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const data = await userService.getEnrichedProfile(req.user.id);
+      const data = await userService.getEnrichedProfile((req as any).user.id);
       sendSuccess(res, data, "Enriched profile retrieved successfully", 200);
     },
   );
@@ -139,7 +139,7 @@ export class UserController {
       delete allowedUpdates.email;
 
       const updatedUser = await userService.updateUserById(
-        req.user.id,
+        (req as any).user.id,
         allowedUpdates,
       );
       console.log(
@@ -163,7 +163,7 @@ export class UserController {
       delete allowedUpdates.email;
 
       const updatedUser = await userService.onboardUser(
-        req.user.id,
+        (req as any).user.id,
         allowedUpdates,
       );
 
@@ -184,7 +184,7 @@ export class UserController {
       );
 
       // Send welcome notification
-      sendPushNotification(updatedUser, {
+      sendPushNotification(updatedUser as any, {
         title: "Welcome to DriftCare! 🚀",
         body: "Your health profile is now active. We'll notify you of any health drift detected.",
       });
@@ -195,7 +195,7 @@ export class UserController {
     async (req: Request, res: Response, next: NextFunction) => {
       const { subscription } = req.body;
 
-      await userService.updateUserById(req.user.id, {
+      await userService.updateUserById((req as any).user.id, {
         pushSubscription: subscription,
       });
 

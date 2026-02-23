@@ -8,7 +8,7 @@ const service = new DailyCheckInService();
 export class DailyCheckInController {
   create = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
-      const checkIn = await service.create(req.user.id, req.body);
+      const checkIn = await service.create((req as any).user.id, req.body);
       sendSuccess(
         res,
         { checkIn },
@@ -20,7 +20,7 @@ export class DailyCheckInController {
 
   getAll = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
-      const checkIns = await service.getAll(req.user.id);
+      const checkIns = await service.getAll((req as any).user.id);
       sendSuccess(
         res,
         { results: checkIns.length, checkIns },
@@ -32,7 +32,7 @@ export class DailyCheckInController {
 
   getToday = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
-      const checkIn = await service.getToday(req.user.id);
+      const checkIn = await service.getToday((req as any).user.id);
       if (!checkIn) {
         return sendSuccess(
           res,
@@ -49,7 +49,7 @@ export class DailyCheckInController {
     async (req: Request, res: Response, _next: NextFunction) => {
       const checkIn = await service.getById(
         req.params.id as string,
-        req.user.id,
+        (req as any).user.id,
       );
       sendSuccess(res, { checkIn }, "Daily check-in retrieved", 200);
     },
@@ -59,7 +59,7 @@ export class DailyCheckInController {
     async (req: Request, res: Response, _next: NextFunction) => {
       const checkIn = await service.update(
         req.params.id as string,
-        req.user.id,
+        (req as any).user.id,
         req.body,
       );
       sendSuccess(res, { checkIn }, "Daily check-in updated successfully", 200);
@@ -68,7 +68,7 @@ export class DailyCheckInController {
 
   delete = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
-      await service.delete(req.params.id as string, req.user.id);
+      await service.delete(req.params.id as string, (req as any).user.id);
       sendSuccess(res, null, "Daily check-in deleted", 200);
     },
   );

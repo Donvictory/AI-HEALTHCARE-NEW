@@ -1,7 +1,8 @@
 import { MongooseRepository } from "../../utils/crud.util";
 import DailyCheckInModel, { IDailyCheckIn } from "./daily-check-in.model";
 import UserModel from "../user/user.model";
-import { calculateResilience } from "../../utils/health.util";
+import { calculateResilience, calculateDrift } from "../../utils/health.util";
+import { sendPushNotification } from "../../utils/push-notifications.util";
 import { AppError } from "../../utils/app-error.util";
 import {
   CreateDailyCheckInDto,
@@ -25,10 +26,48 @@ export class DailyCheckInService {
     const { resilience } = calculateResilience(checkIn as any);
 
     // Update user: award points, mark check-in done
-    await UserModel.findByIdAndUpdate(userId, {
-      $inc: { healthPoints: resilience },
-      hasCompletedDailyChecks: true,
-    });
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      {
+        $inc: { healthPoints: resilience },
+        hasCompletedDailyChecks: true,
+      },
+      { new: true },
+    );
+
+    // Get recent history for drift analysis
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const recentCheckIns = await DailyCheckInModel.find({
+      userId,
+      createdAt: { $gte: sevenDaysAgo },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const baselineCheckIns = await DailyCheckInModel.find({ userId })
+      .sort({ createdAt: 1 })
+      .limit(10)
+      .lean();
+
+    const drift = calculateDrift(
+      recentCheckIns as any,
+      baselineCheckIns as any,
+    );
+
+    if (drift > 10 && updatedUser) {
+      const message =
+        drift > 20
+          ? "Critical health drift detected! Please check your dashboard for immediate recommendations. ⚠️"
+          : "Concerning shift in your health patterns. Try to prioritize rest today. 🌿";
+
+      await sendPushNotification(updatedUser as any, {
+        title: "Health Alert: Pattern Shift",
+        body: message,
+        url: "/dashboard",
+      });
+    }
 
     return checkIn;
   }
