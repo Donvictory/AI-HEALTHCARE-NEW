@@ -1,3 +1,16 @@
 {
+<<<<<<< HEAD
   "rewrites": [{ "source": "/(.*)", "destination": "/client/index.html" }]
+=======
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "server/src/server.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/client/index.html"
+    }
+  ]
+>>>>>>> 965819ea410ee5122c1b3b924e00a003ef6ce19c
 }
