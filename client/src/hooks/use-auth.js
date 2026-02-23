@@ -95,7 +95,9 @@ export const useMe = () => {
     },
     // Only run this query when the browser has the session hint cookie.
     // This avoids an unnecessary 401 round-trip on first load for guests.
-    enabled: isAuthenticated(),
+    // Only run this query when the browser has a session signal.
+    // We check for the cookie OR the local cache fallback (useful in local dev).
+    enabled: isAuthenticated() || !!getUserAuth(),
     retry: 1,
     staleTime: 0, // Always verify session on mount/navigation
   });

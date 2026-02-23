@@ -21,14 +21,14 @@ export function ProtectedRoute({ children }) {
     );
   }
 
-  // 2. If no user and no local session hint, redirect to login
-  if (!user && !isAuthenticated()) {
+  // 2. If no user and we are not loading, redirect to login
+  if (!user && !isLoading) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // 3. If authenticated but not onboarded, force onboarding (unless already there)
   const userIsOnboarded = user?.isOnboarded ?? isOnboarded();
-  if (!userIsOnboarded && location.pathname !== "/onboarding") {
+  if (!isLoading && !userIsOnboarded && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -51,7 +51,7 @@ export function OnboardingRoute({ children }) {
     );
   }
 
-  if (!user && !isAuthenticated()) {
+  if (!user && !isLoading) {
     return <Navigate to="/login" replace />;
   }
 
@@ -76,7 +76,11 @@ export function GuestRoute({ children }) {
     return null; // Silent check
   }
 
-  if (user || isAuthenticated()) {
+  // CRITICAL FIX: Only redirect to dashboard if the 'user' object is actually present.
+  // This prevents an infinite loop where the 'is_logged_in' cookie exists but
+  // the session is invalid (so the Layout redirects to /login, but this guard
+  // would normally redirect back to /dashboard).
+  if (user && !isLoading) {
     return <Navigate to="/dashboard" replace />;
   }
 
